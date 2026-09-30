@@ -1,0 +1,6 @@
+import {defineConfig} from '@playwright/test';import {fileURLToPath} from 'node:url';import path from 'node:path';import {mkdtempSync} from 'node:fs';import {tmpdir} from 'node:os';
+const dir=path.dirname(fileURLToPath(import.meta.url));
+const bundled=dir.endsWith(path.join('bundle','tests'));
+const server=path.resolve(dir,bundled?'../product/server.js':'../bundle/product/server.js');
+const external=process.env.AGENTFLOW_API_URL;const port=process.env.AGENTFLOW_WEB_PORT || '8765';
+export function configuration(type){return defineConfig({testDir:path.join(dir,type),workers:1,retries:0,timeout:20000,reporter:[['json',{outputFile:process.env.PLAYWRIGHT_JSON_OUTPUT_NAME || path.resolve('reports',type+'.json')}]],use:{baseURL:external || 'http://127.0.0.1:'+port,headless:true,trace:'retain-on-failure',launchOptions:process.env.AGENTFLOW_BROWSER_EXECUTABLE?{executablePath:process.env.AGENTFLOW_BROWSER_EXECUTABLE}:{}},webServer:external?undefined:{command:'node '+JSON.stringify(server),url:'http://127.0.0.1:'+port+'/health',reuseExistingServer:false,timeout:20000,env:{AGENTFLOW_TEST_DATA_DIR:mkdtempSync(path.join(tmpdir(),'tickets-e2e-')),AGENTFLOW_WEB_PORT:port,AGENTFLOW_FAULT_MODE:process.env.AGENTFLOW_FAULT_MODE || ''}}});}

@@ -1,0 +1,15 @@
+{
+  "artifact": "/Users/yangyang/Documents/Codex/2026-09-15/agent-agent-agent-review-agent-agent/outputs/AgentFlow-MVP-本地多平台接口契约-v0.3.openapi.json",
+  "validation_scope": "Offline JSON, local refs, complete path parameters, operation IDs, listener/server/security declarations, response/schema fixtures and manifest/identity negative cases. Not runtime TLS, GUI, Git or full third-party OpenAPI certification.",
+  "paths": 39,
+  "operations": 49,
+  "schemas": 154,
+  "reference_occurrences": 1192,
+  "examples_checked": 612,
+  "checks": 2701,
+  "passed": true,
+  "failures": [],
+  "model_calls": 0,
+  "node_probes_executed": 0,
+  "machine_configuration_changes": 0
+}

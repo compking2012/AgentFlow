@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "domain": "tickets",
+  "rules": [
+    {"id": "title.required", "expected": "Whitespace-only and titles above 120 Unicode scalar values are rejected"},
+    {"id": "ticket.persisted", "expected": "A successfully created ticket remains readable after refresh/reopen"},
+    {"id": "assignment.authorized", "expected": "Only manager may assign a ticket; member request receives 403 and does not mutate data"},
+    {"id": "cross_client.consistent", "expected": "API, native clients and Web observe changes to the same ticket and candidate backend"}
+  ],
+  "deliberate_fault_modes": ["lost_save", "allow_unauthorized"],
+  "required_mvp_targets": ["web", "api", "ios_native", "android_native", "windows_native", "macos_native", "linux_native"]
+}

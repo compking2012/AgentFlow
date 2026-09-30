@@ -1,0 +1,374 @@
+{
+  "schema_version": 1,
+  "targets": [
+    {
+      "target_config_id": "f52e99cd-9d42-50c7-a5a0-a916cad222ca",
+      "build": {
+        "adapter": "web",
+        "project_path": "web_api",
+        "product_path": "web_api/bundle/product",
+        "output_paths": {
+          "product": "web_api/bundle/product",
+          "test": "web_api/bundle/tests"
+        }
+      },
+      "unit": {
+        "adapter": "web",
+        "project_path": "web_api",
+        "product_path": "web_api/bundle/product",
+        "test_project_path": "web_api/bundle/tests",
+        "test_kind": "unit",
+        "unit_project": "web_api/bundle/tests/unit/domain.test.mjs",
+        "report_path": "reports/web-unit.xml",
+        "expected_case_ids": [
+          "test::title validation rejects empty and oversized values",
+          "test::successful write survives database reopen",
+          "test::member cannot mutate an assignment"
+        ]
+      },
+      "integration": {
+        "adapter": "web",
+        "project_path": "web_api",
+        "product_path": "web_api/bundle/product",
+        "test_project_path": "web_api/bundle/tests",
+        "test_kind": "integration",
+        "framework_config": "web_api/bundle/tests/playwright.web.config.mjs",
+        "report_path": "reports/web-integration.json",
+        "expected_case_ids": [
+          "tickets.spec.ts::created ticket remains after browser reload::",
+          "tickets.spec.ts::member assignment is rejected in UI and database::"
+        ]
+      }
+    },
+    {
+      "target_config_id": "7ee13067-700d-53f4-86c0-525724e19183",
+      "build": {
+        "adapter": "api",
+        "project_path": "web_api",
+        "product_path": "web_api/bundle/product",
+        "output_paths": {
+          "product": "web_api/bundle/product",
+          "test": "web_api/bundle/tests"
+        }
+      },
+      "unit": {
+        "adapter": "api",
+        "project_path": "web_api",
+        "product_path": "web_api/bundle/product",
+        "test_project_path": "web_api/bundle/tests",
+        "test_kind": "unit",
+        "unit_project": "web_api/bundle/tests/unit/domain.test.mjs",
+        "report_path": "reports/api-unit.xml",
+        "expected_case_ids": [
+          "test::title validation rejects empty and oversized values",
+          "test::successful write survives database reopen",
+          "test::member cannot mutate an assignment"
+        ]
+      },
+      "integration": {
+        "adapter": "api",
+        "project_path": "web_api",
+        "product_path": "web_api/bundle/product",
+        "test_project_path": "web_api/bundle/tests",
+        "test_kind": "api",
+        "framework_config": "web_api/bundle/tests/playwright.api.config.mjs",
+        "report_path": "reports/api-integration.json",
+        "expected_case_ids": [
+          "tickets.spec.ts::create and reread returns the same persisted ticket::",
+          "tickets.spec.ts::authorization failure leaves assignment unchanged::",
+          "tickets.spec.ts::invalid title and missing authentication are rejected::"
+        ]
+      }
+    },
+    {
+      "target_config_id": "fd9796a8-aced-5336-87d3-753267b80d7d",
+      "build": {
+        "adapter": "ios_native",
+        "project_path": "apple/ios",
+        "project_file": "apple/ios/TicketIOS.xcodeproj",
+        "scheme": "TicketIOS",
+        "configuration": "Debug",
+        "product_path": "build/Build/Products/Debug-iphonesimulator/TicketIOS.app",
+        "device_id": "OWNER_DEVICE_ID",
+        "xcodegen_spec": "apple/ios/project.yml",
+        "output_paths": {
+          "product": "build/Build/Products/Debug-iphonesimulator/TicketIOS.app",
+          "test": "build/Build/Products"
+        },
+        "application_id": "local.agentflow.reference.ios"
+      },
+      "install": {
+        "adapter": "ios_native",
+        "project_path": ".",
+        "project_file": "apple/ios/TicketIOS.xcodeproj",
+        "scheme": "TicketIOS",
+        "configuration": "Debug",
+        "product_path": "build/Build/Products/Debug-iphonesimulator/TicketIOS.app",
+        "device_id": "OWNER_DEVICE_ID",
+        "application_id": "local.agentflow.reference.ios"
+      },
+      "unit": {
+        "adapter": "ios_native",
+        "project_path": ".",
+        "project_file": "apple/ios/TicketIOS.xcodeproj",
+        "scheme": "TicketIOS",
+        "configuration": "Debug",
+        "product_path": "build/Build/Products/Debug-iphonesimulator/TicketIOS.app",
+        "device_id": "OWNER_DEVICE_ID",
+        "test_kind": "unit",
+        "xctestrun": "build/Build/Products/*.xctestrun",
+        "test_product_path": "build/Build/Products",
+        "test_selectors": [
+          "TicketIOSUnitTests"
+        ],
+        "report_path": "reports/ios_native-unit.xcresult",
+        "expected_case_ids": [
+          "TicketRulesTests/testRequiredTitle()",
+          "TicketRulesTests/testLengthLimit()"
+        ],
+        "application_id": "local.agentflow.reference.ios"
+      },
+      "integration": {
+        "adapter": "ios_native",
+        "project_path": ".",
+        "project_file": "apple/ios/TicketIOS.xcodeproj",
+        "scheme": "TicketIOS",
+        "configuration": "Debug",
+        "product_path": "build/Build/Products/Debug-iphonesimulator/TicketIOS.app",
+        "device_id": "OWNER_DEVICE_ID",
+        "test_kind": "gui",
+        "xctestrun": "build/Build/Products/*.xctestrun",
+        "test_product_path": "build/Build/Products",
+        "test_selectors": [
+          "TicketIOSUITests"
+        ],
+        "report_path": "reports/ios_native-integration.xcresult",
+        "expected_case_ids": [
+          "TicketUITests/testCreateAndReopen()"
+        ],
+        "service_urls": {
+          "api": "http://OWNER_REFERENCE_API_HOST:8765"
+        },
+        "service_target_config_ids": {
+          "api": "7ee13067-700d-53f4-86c0-525724e19183"
+        },
+        "application_id": "local.agentflow.reference.ios"
+      }
+    },
+    {
+      "target_config_id": "e01d8a7c-209f-5f8e-ac66-fa388fa5c188",
+      "build": {
+        "adapter": "android_native",
+        "project_path": "android",
+        "product_path": "android/app/build/outputs/apk/debug/app-debug.apk",
+        "device_id": "OWNER_DEVICE_ID",
+        "gradle_executable": "gradle",
+        "output_paths": {
+          "product": "android/app/build/outputs/apk/debug",
+          "test": "android/app/build/agentflow-tests"
+        },
+        "application_id": "local.agentflow.reference.android",
+        "instrumentation_runner": "local.agentflow.reference.android.test/androidx.test.runner.AndroidJUnitRunner"
+      },
+      "install": {
+        "adapter": "android_native",
+        "project_path": "android",
+        "product_path": "android/app/build/outputs/apk/debug/app-debug.apk",
+        "device_id": "OWNER_DEVICE_ID",
+        "test_product_path": "android/app/build/agentflow-tests/instrumentation.apk",
+        "application_id": "local.agentflow.reference.android",
+        "instrumentation_runner": "local.agentflow.reference.android.test/androidx.test.runner.AndroidJUnitRunner"
+      },
+      "unit": {
+        "adapter": "android_native",
+        "project_path": "android",
+        "product_path": "android/app/build/outputs/apk/debug/app-debug.apk",
+        "device_id": "OWNER_DEVICE_ID",
+        "test_kind": "unit",
+        "test_product_path": "android/app/build/agentflow-tests/unit-tests.jar",
+        "report_path": "reports/android-unit/TEST-junit-vintage.xml",
+        "expected_case_ids": [
+          "local.agentflow.reference.TicketRulesTest::requiredTitle",
+          "local.agentflow.reference.TicketRulesTest::lengthBoundary"
+        ],
+        "application_id": "local.agentflow.reference.android",
+        "instrumentation_runner": "local.agentflow.reference.android.test/androidx.test.runner.AndroidJUnitRunner"
+      },
+      "integration": {
+        "adapter": "android_native",
+        "project_path": "android",
+        "product_path": "android/app/build/outputs/apk/debug/app-debug.apk",
+        "device_id": "OWNER_DEVICE_ID",
+        "test_kind": "gui",
+        "instrumentation_runner": "local.agentflow.reference.android.test/androidx.test.runner.AndroidJUnitRunner",
+        "test_selectors": [
+          "local.agentflow.reference.TicketUiTest"
+        ],
+        "report_path": "reports/android-instrumentation.txt",
+        "service_urls": {
+          "api": "http://OWNER_REFERENCE_API_HOST:8765"
+        },
+        "expected_case_ids": [
+          "local.agentflow.reference.TicketUiTest#createAndReopen"
+        ],
+        "service_target_config_ids": {
+          "api": "7ee13067-700d-53f4-86c0-525724e19183"
+        },
+        "application_id": "local.agentflow.reference.android"
+      }
+    },
+    {
+      "target_config_id": "a66cc9ed-00cc-5e12-8460-5cdf4be593cc",
+      "build": {
+        "adapter": "windows_native",
+        "project_path": "windows",
+        "project_file": "windows/TicketTests/TicketTests.csproj",
+        "configuration": "Debug",
+        "product_path": "windows/TicketClient/bin/Debug/net8.0-windows/TicketClient.exe",
+        "output_paths": {
+          "product": "windows/TicketClient/bin/Debug/net8.0-windows",
+          "test": "windows/TicketTests/bin/Debug/net8.0-windows"
+        }
+      },
+      "unit": {
+        "adapter": "windows_native",
+        "project_path": "windows",
+        "project_file": "windows/TicketTests/TicketTests.csproj",
+        "configuration": "Debug",
+        "product_path": "windows/TicketClient/bin/Debug/net8.0-windows/TicketClient.exe",
+        "test_kind": "unit",
+        "unit_project": "windows/TicketTests/bin/Debug/net8.0-windows/TicketTests.dll",
+        "test_selectors": [
+          "AgentFlow.Reference.Tests.RulesTests"
+        ],
+        "report_path": "reports/windows-unit.xml",
+        "expected_case_ids": [
+          "AgentFlow.Reference.Tests.RulesTests::RequiredTitle",
+          "AgentFlow.Reference.Tests.RulesTests::LengthBoundary"
+        ]
+      },
+      "integration": {
+        "adapter": "windows_native",
+        "project_path": "windows",
+        "project_file": "windows/TicketTests/TicketTests.csproj",
+        "configuration": "Debug",
+        "product_path": "windows/TicketClient/bin/Debug/net8.0-windows/TicketClient.exe",
+        "test_kind": "gui",
+        "gui_project": "windows/TicketTests/bin/Debug/net8.0-windows/TicketTests.dll",
+        "test_selectors": [
+          "AgentFlow.Reference.Tests.GuiTests"
+        ],
+        "report_path": "reports/windows-integration.xml",
+        "expected_case_ids": [
+          "AgentFlow.Reference.Tests.GuiTests::CreateAndReopen"
+        ],
+        "service_urls": {
+          "api": "http://OWNER_REFERENCE_API_HOST:8765"
+        },
+        "service_target_config_ids": {
+          "api": "7ee13067-700d-53f4-86c0-525724e19183"
+        }
+      }
+    },
+    {
+      "target_config_id": "88cda1d6-16f5-5808-9213-7f6c1c8b2a8f",
+      "build": {
+        "adapter": "macos_native",
+        "project_path": "apple/macos",
+        "project_file": "apple/macos/TicketMac.xcodeproj",
+        "scheme": "TicketMac",
+        "configuration": "Debug",
+        "product_path": "build/Build/Products/Debug/TicketMac.app",
+        "xcodegen_spec": "apple/macos/project.yml",
+        "output_paths": {
+          "product": "build/Build/Products/Debug/TicketMac.app",
+          "test": "build/Build/Products"
+        }
+      },
+      "unit": {
+        "adapter": "macos_native",
+        "project_path": ".",
+        "project_file": "apple/macos/TicketMac.xcodeproj",
+        "scheme": "TicketMac",
+        "configuration": "Debug",
+        "product_path": "build/Build/Products/Debug/TicketMac.app",
+        "test_kind": "unit",
+        "xctestrun": "build/Build/Products/*.xctestrun",
+        "test_product_path": "build/Build/Products",
+        "test_selectors": [
+          "TicketMacUnitTests"
+        ],
+        "report_path": "reports/macos_native-unit.xcresult",
+        "expected_case_ids": [
+          "TicketRulesTests/testRequiredTitle()",
+          "TicketRulesTests/testLengthLimit()"
+        ]
+      },
+      "integration": {
+        "adapter": "macos_native",
+        "project_path": ".",
+        "project_file": "apple/macos/TicketMac.xcodeproj",
+        "scheme": "TicketMac",
+        "configuration": "Debug",
+        "product_path": "build/Build/Products/Debug/TicketMac.app",
+        "test_kind": "gui",
+        "xctestrun": "build/Build/Products/*.xctestrun",
+        "test_product_path": "build/Build/Products",
+        "test_selectors": [
+          "TicketMacUITests"
+        ],
+        "report_path": "reports/macos_native-integration.xcresult",
+        "expected_case_ids": [
+          "TicketUITests/testCreateAndReopen()"
+        ],
+        "service_urls": {
+          "api": "http://OWNER_REFERENCE_API_HOST:8765"
+        },
+        "service_target_config_ids": {
+          "api": "7ee13067-700d-53f4-86c0-525724e19183"
+        }
+      }
+    },
+    {
+      "target_config_id": "0122042a-a029-522c-8d2f-73654c6ce0dd",
+      "build": {
+        "adapter": "linux_native",
+        "project_path": "linux_native",
+        "product_path": "linux_native",
+        "output_paths": {
+          "product": "linux_native",
+          "test": "linux_native/tests"
+        }
+      },
+      "unit": {
+        "adapter": "linux_native",
+        "project_path": "linux_native",
+        "product_path": "linux_native",
+        "test_kind": "unit",
+        "unit_project": "linux_native/tests/unit",
+        "report_path": "reports/linux-unit.xml",
+        "expected_case_ids": [
+          "test_rules::test_required_title",
+          "test_rules::test_length_limit"
+        ]
+      },
+      "integration": {
+        "adapter": "linux_native",
+        "project_path": "linux_native",
+        "product_path": "linux_native",
+        "test_kind": "gui",
+        "gui_project": "linux_native/tests/gui",
+        "report_path": "reports/linux-integration.xml",
+        "service_urls": {
+          "api": "http://OWNER_REFERENCE_API_HOST:8765"
+        },
+        "expected_case_ids": [
+          "test_native::test_native_create_persists_after_reopen"
+        ],
+        "service_target_config_ids": {
+          "api": "7ee13067-700d-53f4-86c0-525724e19183"
+        }
+      }
+    }
+  ]
+}

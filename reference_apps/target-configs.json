@@ -1,0 +1,277 @@
+[
+  {
+    "target_config_id": "f52e99cd-9d42-50c7-a5a0-a916cad222ca",
+    "revision": 1,
+    "app_target": "web",
+    "os_name": "Darwin",
+    "os_version_constraint": "OWNER_WEB_OS_VERSION",
+    "cpu_architecture": "OWNER_WEB_CPU_ARCHITECTURE",
+    "required_display_protocol": "not_required",
+    "required_device_mode": "not_required",
+    "required_resource_ids": [
+      "OWNER_WEB_WORKSPACE_RESOURCE_ID"
+    ],
+    "sdk_requirements": [
+      {
+        "name": "node",
+        "version_constraint": ">=22.13"
+      },
+      {
+        "name": "npm",
+        "version_constraint": "OWNER_NPM_VERSION"
+      },
+      {
+        "name": "chrome",
+        "version_constraint": "OWNER_CHROMIUM_VERSION"
+      }
+    ],
+    "required_capabilities": [],
+    "build_backend": {
+      "name": "npm",
+      "version_constraint": "OWNER_NPM_VERSION"
+    },
+    "test_backend": {
+      "name": "node",
+      "version_constraint": ">=22.13"
+    }
+  },
+  {
+    "target_config_id": "7ee13067-700d-53f4-86c0-525724e19183",
+    "revision": 1,
+    "app_target": "api",
+    "os_name": "Darwin",
+    "os_version_constraint": "OWNER_API_OS_VERSION",
+    "cpu_architecture": "OWNER_API_CPU_ARCHITECTURE",
+    "required_display_protocol": "not_required",
+    "required_device_mode": "not_required",
+    "required_resource_ids": [
+      "OWNER_API_WORKSPACE_RESOURCE_ID"
+    ],
+    "sdk_requirements": [
+      {
+        "name": "node",
+        "version_constraint": ">=22.13"
+      },
+      {
+        "name": "npm",
+        "version_constraint": "OWNER_NPM_VERSION"
+      }
+    ],
+    "required_capabilities": [
+      "protocol_calls"
+    ],
+    "build_backend": {
+      "name": "npm",
+      "version_constraint": "OWNER_NPM_VERSION"
+    },
+    "test_backend": {
+      "name": "node",
+      "version_constraint": ">=22.13"
+    }
+  },
+  {
+    "target_config_id": "fd9796a8-aced-5336-87d3-753267b80d7d",
+    "revision": 1,
+    "app_target": "ios_native",
+    "os_name": "iOS",
+    "os_version_constraint": "OWNER_IOS_NATIVE_OS_VERSION",
+    "cpu_architecture": "OWNER_IOS_NATIVE_CPU_ARCHITECTURE",
+    "required_display_protocol": "ios",
+    "required_device_mode": "simulator",
+    "required_resource_ids": [
+      "OWNER_IOS_NATIVE_WORKSPACE_RESOURCE_ID",
+      "OWNER_IOS_NATIVE_DEVICE_RESOURCE_ID"
+    ],
+    "sdk_requirements": [
+      {
+        "name": "xcodebuild",
+        "version_constraint": "OWNER_XCODE_VERSION"
+      },
+      {
+        "name": "xcodegen",
+        "version_constraint": "OWNER_XCODEGEN_VERSION"
+      }
+    ],
+    "required_capabilities": [
+      "interactive_session",
+      "screen_capture",
+      "input_control",
+      "accessibility"
+    ],
+    "ui_framework": "SwiftUI",
+    "ui_framework_version_constraint": "OWNER_SWIFTUI_SDK_VERSION",
+    "build_backend": {
+      "name": "xcodebuild",
+      "version_constraint": "OWNER_XCODE_VERSION"
+    },
+    "test_backend": {
+      "name": "xcodebuild",
+      "version_constraint": "OWNER_XCODE_VERSION"
+    },
+    "device_model_constraints": [
+      "OWNER_IOS_NATIVE_DEVICE_MODEL"
+    ]
+  },
+  {
+    "target_config_id": "e01d8a7c-209f-5f8e-ac66-fa388fa5c188",
+    "revision": 1,
+    "app_target": "android_native",
+    "os_name": "Android",
+    "os_version_constraint": "OWNER_ANDROID_NATIVE_OS_VERSION",
+    "cpu_architecture": "OWNER_ANDROID_NATIVE_CPU_ARCHITECTURE",
+    "required_display_protocol": "android",
+    "required_device_mode": "simulator",
+    "required_resource_ids": [
+      "OWNER_ANDROID_NATIVE_WORKSPACE_RESOURCE_ID",
+      "OWNER_ANDROID_NATIVE_DEVICE_RESOURCE_ID"
+    ],
+    "sdk_requirements": [
+      {
+        "name": "java",
+        "version_constraint": "17.*"
+      },
+      {
+        "name": "gradle",
+        "version_constraint": "8.7"
+      },
+      {
+        "name": "adb",
+        "version_constraint": "OWNER_ANDROID_PLATFORM_TOOLS_VERSION"
+      }
+    ],
+    "required_capabilities": [
+      "screen_capture",
+      "input_control",
+      "accessibility"
+    ],
+    "ui_framework": "Android Views",
+    "ui_framework_version_constraint": "OWNER_ANDROID_FRAMEWORK_VERSION",
+    "build_backend": {
+      "name": "gradle",
+      "version_constraint": "8.7"
+    },
+    "test_backend": {
+      "name": "adb",
+      "version_constraint": "OWNER_ANDROID_PLATFORM_TOOLS_VERSION"
+    },
+    "device_model_constraints": [
+      "OWNER_ANDROID_NATIVE_DEVICE_MODEL"
+    ]
+  },
+  {
+    "target_config_id": "a66cc9ed-00cc-5e12-8460-5cdf4be593cc",
+    "revision": 1,
+    "app_target": "windows_native",
+    "os_name": "Windows",
+    "os_version_constraint": "OWNER_WINDOWS_NATIVE_OS_VERSION",
+    "cpu_architecture": "OWNER_WINDOWS_NATIVE_CPU_ARCHITECTURE",
+    "required_display_protocol": "windows_desktop",
+    "required_device_mode": "not_required",
+    "required_resource_ids": [
+      "OWNER_WINDOWS_NATIVE_WORKSPACE_RESOURCE_ID",
+      "OWNER_WINDOWS_NATIVE_DESKTOP_RESOURCE_ID"
+    ],
+    "sdk_requirements": [
+      {
+        "name": "dotnet",
+        "version_constraint": "8.*"
+      }
+    ],
+    "required_capabilities": [
+      "interactive_session",
+      "screen_capture",
+      "input_control",
+      "accessibility"
+    ],
+    "ui_framework": "WPF",
+    "ui_framework_version_constraint": "8.0",
+    "build_backend": {
+      "name": "dotnet",
+      "version_constraint": "8.*"
+    },
+    "test_backend": {
+      "name": "dotnet",
+      "version_constraint": "8.*"
+    }
+  },
+  {
+    "target_config_id": "88cda1d6-16f5-5808-9213-7f6c1c8b2a8f",
+    "revision": 1,
+    "app_target": "macos_native",
+    "os_name": "Darwin",
+    "os_version_constraint": "OWNER_MACOS_NATIVE_OS_VERSION",
+    "cpu_architecture": "OWNER_MACOS_NATIVE_CPU_ARCHITECTURE",
+    "required_display_protocol": "macos_aqua",
+    "required_device_mode": "not_required",
+    "required_resource_ids": [
+      "OWNER_MACOS_NATIVE_WORKSPACE_RESOURCE_ID",
+      "OWNER_MACOS_NATIVE_DESKTOP_RESOURCE_ID"
+    ],
+    "sdk_requirements": [
+      {
+        "name": "xcodebuild",
+        "version_constraint": "OWNER_XCODE_VERSION"
+      },
+      {
+        "name": "xcodegen",
+        "version_constraint": "OWNER_XCODEGEN_VERSION"
+      }
+    ],
+    "required_capabilities": [
+      "interactive_session",
+      "screen_capture",
+      "input_control",
+      "accessibility"
+    ],
+    "ui_framework": "SwiftUI",
+    "ui_framework_version_constraint": "OWNER_SWIFTUI_SDK_VERSION",
+    "build_backend": {
+      "name": "xcodebuild",
+      "version_constraint": "OWNER_XCODE_VERSION"
+    },
+    "test_backend": {
+      "name": "xcodebuild",
+      "version_constraint": "OWNER_XCODE_VERSION"
+    }
+  },
+  {
+    "target_config_id": "0122042a-a029-522c-8d2f-73654c6ce0dd",
+    "revision": 1,
+    "app_target": "linux_native",
+    "os_name": "Linux",
+    "os_version_constraint": "OWNER_LINUX_NATIVE_OS_VERSION",
+    "cpu_architecture": "OWNER_LINUX_NATIVE_CPU_ARCHITECTURE",
+    "required_display_protocol": "x11",
+    "required_device_mode": "not_required",
+    "required_resource_ids": [
+      "OWNER_LINUX_NATIVE_WORKSPACE_RESOURCE_ID",
+      "OWNER_LINUX_NATIVE_DESKTOP_RESOURCE_ID"
+    ],
+    "sdk_requirements": [
+      {
+        "name": "python3",
+        "version_constraint": ">=3.12,<3.13"
+      },
+      {
+        "name": "pytest",
+        "version_constraint": "8.*"
+      }
+    ],
+    "required_capabilities": [
+      "interactive_session",
+      "screen_capture",
+      "input_control",
+      "accessibility"
+    ],
+    "ui_framework": "GTK",
+    "ui_framework_version_constraint": "3.*",
+    "build_backend": {
+      "name": "python3",
+      "version_constraint": ">=3.12,<3.13"
+    },
+    "test_backend": {
+      "name": "pytest",
+      "version_constraint": "8.*"
+    }
+  }
+]

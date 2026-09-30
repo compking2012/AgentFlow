@@ -1,0 +1,42 @@
+name: TicketMac
+options:
+  bundleIdPrefix: local.agentflow.reference
+  deploymentTarget:
+    macOS: "13.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    GENERATE_INFOPLIST_FILE: YES
+    CODE_SIGN_IDENTITY: "-"
+    ENABLE_APP_SANDBOX: NO
+targets:
+  TicketMac:
+    type: application
+    platform: macOS
+    sources: [Sources, ../shared]
+    info:
+      path: Generated/Info.plist
+      properties:
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: local.agentflow.reference.macos
+  TicketMacUnitTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources: [../shared-tests]
+    dependencies: [{target: TicketMac}]
+  TicketMacUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources: [../shared-ui-tests]
+    dependencies: [{target: TicketMac}]
+schemes:
+  TicketMac:
+    build:
+      targets: {TicketMac: all, TicketMacUnitTests: [test], TicketMacUITests: [test]}
+    test:
+      targets: [TicketMacUnitTests, TicketMacUITests]
+      environmentVariables:
+        AGENTFLOW_API_URL: "$(AGENTFLOW_API_URL)"

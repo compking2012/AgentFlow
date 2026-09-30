@@ -1,0 +1,50 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agentflow-local"
+version = "0.1.0"
+description = "Local-first, single-owner agent software delivery control plane"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115,<1", "uvicorn>=0.34,<1", "pydantic>=2.10,<3",
+  "httpx>=0.28,<1", "cryptography>=44,<49", "jsonschema>=4.23,<5",
+  "psutil>=7,<8", "defusedxml>=0.7,<1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "pytest-asyncio>=0.26,<2", "pytest-cov>=6,<8", "ruff>=0.11,<1"]
+openhands = ["openhands-sdk==1.49.2", "litellm==1.101.0"]
+
+[project.scripts]
+agentflow = "agentflow.cli:main"
+
+[project.urls]
+Repository = "https://github.com/compking2012/AgentFlow"
+Issues = "https://github.com/compking2012/AgentFlow/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agentflow", "src/node_agent"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"contracts/design.openapi.json" = "agentflow/design.openapi.json"
+
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/apps/dashboard", "/tests", "/reference_apps", "/contracts", "/scripts", "/README.md", "/LICENSE", "/CONTRIBUTING.md", "/SECURITY.md", "/pyproject.toml", "/uv.lock", "/.python-version"]
+exclude = ["**/node_modules", "**/.playwright-browsers", "**/.cache", "**/__pycache__", "/tests/browser/artifacts", "/tests/browser/report", "**/.pytest_cache", "**/test-results"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-ra --strict-markers"
+markers = ["native: requires an explicitly configured native environment", "live: paid model integration, opt-in only"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 110
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP"]

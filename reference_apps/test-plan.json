@@ -1,0 +1,267 @@
+{
+  "title": "Seven-target reference test plan — configuration template",
+  "summary": "All seven targets are required. Native framework IDs are provisional source-derived identifiers; schema validation is not platform execution evidence.",
+  "content": "Preserve expectations.json and every listed case. Web/API identifiers were read from actual local raw reports and must be revalidated against the newly frozen candidate. Before use replace every OWNER_* environment, resource, SDK and device value, independently calibrate native raw report identifiers, version this plan and its matching recipes together, and submit the plan through the normal acceptance workflow. Do not remove cases or targets to make an unavailable environment appear successful.",
+  "sources": [
+    "expectations.json",
+    "web_api/tests/unit/domain.test.mjs",
+    "web_api/tests/api/tickets.spec.ts",
+    "web_api/tests/web/tickets.spec.ts",
+    "web_api/reports/unit.xml",
+    "web_api/reports/api.json",
+    "web_api/reports/web.json",
+    "apple/shared-tests/TicketRulesTests.swift",
+    "apple/shared-ui-tests/TicketUITests.swift",
+    "android/app/src/test/java/local/agentflow/reference/TicketRulesTest.kt",
+    "android/app/src/androidTest/java/local/agentflow/reference/TicketUiTest.kt",
+    "windows/TicketTests/RulesTests.cs",
+    "windows/TicketTests/GuiTests.cs",
+    "linux_native/tests/unit/test_rules.py",
+    "linux_native/tests/gui/test_native.py"
+  ],
+  "unknowns": [
+    "UNVERIFIED: iOS and macOS xcresult nodeIdentifier/testIdentifier formatting, Xcode/XcodeGen versions, generated products and GUI execution require the actual selected Apple environment.",
+    "UNVERIFIED: Android SDK/device/runtime, standalone JUnit Vintage case IDs, instrumentation output IDs and APK paths require the actual selected Android environment.",
+    "UNVERIFIED: Windows SDK, NuGet lockfiles, NUnit/JUnit raw IDs, class filtering and FlaUI desktop execution require a real Windows host.",
+    "UNVERIFIED: Linux GTK/AT-SPI/dogtail environment and pytest raw classname prefixes require the actual selected X11 host; Wayland is not silently substituted.",
+    "REQUIRES_CONFIGURATION: OWNER_DEVICE_ID, all OWNER_* TargetConfig fields/resource IDs and OWNER_REFERENCE_API_HOST must be replaced with independently verified concrete values.",
+    "REQUIRES_VERIFICATION: the reference API endpoint must serve the current frozen backend; an HTTP URL alone does not establish backend artifact provenance.",
+    "NO_DELIVERY_CLAIM: existing Web/API raw reports establish identifier provenance only, not success of this seven-target candidate, native support, or a Git delivery."
+  ],
+  "test_cases": [
+    {
+      "case_id": "WEB-UNIT-001",
+      "requirement_id": "title.required",
+      "target_config_id": "f52e99cd-9d42-50c7-a5a0-a916cad222ca",
+      "phase": "unit",
+      "framework_case_ids": [
+        "test::title validation rejects empty and oversized values"
+      ]
+    },
+    {
+      "case_id": "WEB-UNIT-002",
+      "requirement_id": "ticket.persisted",
+      "target_config_id": "f52e99cd-9d42-50c7-a5a0-a916cad222ca",
+      "phase": "unit",
+      "framework_case_ids": [
+        "test::successful write survives database reopen"
+      ]
+    },
+    {
+      "case_id": "WEB-UNIT-003",
+      "requirement_id": "assignment.authorized",
+      "target_config_id": "f52e99cd-9d42-50c7-a5a0-a916cad222ca",
+      "phase": "unit",
+      "framework_case_ids": [
+        "test::member cannot mutate an assignment"
+      ]
+    },
+    {
+      "case_id": "WEB-INTEGRATION-001",
+      "requirement_id": "cross_client.consistent",
+      "target_config_id": "f52e99cd-9d42-50c7-a5a0-a916cad222ca",
+      "phase": "integration",
+      "framework_case_ids": [
+        "tickets.spec.ts::created ticket remains after browser reload::"
+      ]
+    },
+    {
+      "case_id": "WEB-INTEGRATION-002",
+      "requirement_id": "assignment.authorized",
+      "target_config_id": "f52e99cd-9d42-50c7-a5a0-a916cad222ca",
+      "phase": "integration",
+      "framework_case_ids": [
+        "tickets.spec.ts::member assignment is rejected in UI and database::"
+      ]
+    },
+    {
+      "case_id": "API-UNIT-001",
+      "requirement_id": "title.required",
+      "target_config_id": "7ee13067-700d-53f4-86c0-525724e19183",
+      "phase": "unit",
+      "framework_case_ids": [
+        "test::title validation rejects empty and oversized values"
+      ]
+    },
+    {
+      "case_id": "API-UNIT-002",
+      "requirement_id": "ticket.persisted",
+      "target_config_id": "7ee13067-700d-53f4-86c0-525724e19183",
+      "phase": "unit",
+      "framework_case_ids": [
+        "test::successful write survives database reopen"
+      ]
+    },
+    {
+      "case_id": "API-UNIT-003",
+      "requirement_id": "assignment.authorized",
+      "target_config_id": "7ee13067-700d-53f4-86c0-525724e19183",
+      "phase": "unit",
+      "framework_case_ids": [
+        "test::member cannot mutate an assignment"
+      ]
+    },
+    {
+      "case_id": "API-INTEGRATION-001",
+      "requirement_id": "ticket.persisted",
+      "target_config_id": "7ee13067-700d-53f4-86c0-525724e19183",
+      "phase": "integration",
+      "framework_case_ids": [
+        "tickets.spec.ts::create and reread returns the same persisted ticket::"
+      ]
+    },
+    {
+      "case_id": "API-INTEGRATION-002",
+      "requirement_id": "assignment.authorized",
+      "target_config_id": "7ee13067-700d-53f4-86c0-525724e19183",
+      "phase": "integration",
+      "framework_case_ids": [
+        "tickets.spec.ts::authorization failure leaves assignment unchanged::"
+      ]
+    },
+    {
+      "case_id": "API-INTEGRATION-003",
+      "requirement_id": "title.required",
+      "target_config_id": "7ee13067-700d-53f4-86c0-525724e19183",
+      "phase": "integration",
+      "framework_case_ids": [
+        "tickets.spec.ts::invalid title and missing authentication are rejected::"
+      ]
+    },
+    {
+      "case_id": "IOS-UNIT-001",
+      "requirement_id": "title.required",
+      "target_config_id": "fd9796a8-aced-5336-87d3-753267b80d7d",
+      "phase": "unit",
+      "framework_case_ids": [
+        "TicketRulesTests/testRequiredTitle()"
+      ]
+    },
+    {
+      "case_id": "IOS-UNIT-002",
+      "requirement_id": "title.required",
+      "target_config_id": "fd9796a8-aced-5336-87d3-753267b80d7d",
+      "phase": "unit",
+      "framework_case_ids": [
+        "TicketRulesTests/testLengthLimit()"
+      ]
+    },
+    {
+      "case_id": "IOS-INTEGRATION-001",
+      "requirement_id": "ticket.persisted",
+      "target_config_id": "fd9796a8-aced-5336-87d3-753267b80d7d",
+      "phase": "integration",
+      "framework_case_ids": [
+        "TicketUITests/testCreateAndReopen()"
+      ]
+    },
+    {
+      "case_id": "ANDROID-UNIT-001",
+      "requirement_id": "title.required",
+      "target_config_id": "e01d8a7c-209f-5f8e-ac66-fa388fa5c188",
+      "phase": "unit",
+      "framework_case_ids": [
+        "local.agentflow.reference.TicketRulesTest::requiredTitle"
+      ]
+    },
+    {
+      "case_id": "ANDROID-UNIT-002",
+      "requirement_id": "title.required",
+      "target_config_id": "e01d8a7c-209f-5f8e-ac66-fa388fa5c188",
+      "phase": "unit",
+      "framework_case_ids": [
+        "local.agentflow.reference.TicketRulesTest::lengthBoundary"
+      ]
+    },
+    {
+      "case_id": "ANDROID-INTEGRATION-001",
+      "requirement_id": "ticket.persisted",
+      "target_config_id": "e01d8a7c-209f-5f8e-ac66-fa388fa5c188",
+      "phase": "integration",
+      "framework_case_ids": [
+        "local.agentflow.reference.TicketUiTest#createAndReopen"
+      ]
+    },
+    {
+      "case_id": "WINDOWS-UNIT-001",
+      "requirement_id": "title.required",
+      "target_config_id": "a66cc9ed-00cc-5e12-8460-5cdf4be593cc",
+      "phase": "unit",
+      "framework_case_ids": [
+        "AgentFlow.Reference.Tests.RulesTests::RequiredTitle"
+      ]
+    },
+    {
+      "case_id": "WINDOWS-UNIT-002",
+      "requirement_id": "title.required",
+      "target_config_id": "a66cc9ed-00cc-5e12-8460-5cdf4be593cc",
+      "phase": "unit",
+      "framework_case_ids": [
+        "AgentFlow.Reference.Tests.RulesTests::LengthBoundary"
+      ]
+    },
+    {
+      "case_id": "WINDOWS-INTEGRATION-001",
+      "requirement_id": "ticket.persisted",
+      "target_config_id": "a66cc9ed-00cc-5e12-8460-5cdf4be593cc",
+      "phase": "integration",
+      "framework_case_ids": [
+        "AgentFlow.Reference.Tests.GuiTests::CreateAndReopen"
+      ]
+    },
+    {
+      "case_id": "MACOS-UNIT-001",
+      "requirement_id": "title.required",
+      "target_config_id": "88cda1d6-16f5-5808-9213-7f6c1c8b2a8f",
+      "phase": "unit",
+      "framework_case_ids": [
+        "TicketRulesTests/testRequiredTitle()"
+      ]
+    },
+    {
+      "case_id": "MACOS-UNIT-002",
+      "requirement_id": "title.required",
+      "target_config_id": "88cda1d6-16f5-5808-9213-7f6c1c8b2a8f",
+      "phase": "unit",
+      "framework_case_ids": [
+        "TicketRulesTests/testLengthLimit()"
+      ]
+    },
+    {
+      "case_id": "MACOS-INTEGRATION-001",
+      "requirement_id": "ticket.persisted",
+      "target_config_id": "88cda1d6-16f5-5808-9213-7f6c1c8b2a8f",
+      "phase": "integration",
+      "framework_case_ids": [
+        "TicketUITests/testCreateAndReopen()"
+      ]
+    },
+    {
+      "case_id": "LINUX-UNIT-001",
+      "requirement_id": "title.required",
+      "target_config_id": "0122042a-a029-522c-8d2f-73654c6ce0dd",
+      "phase": "unit",
+      "framework_case_ids": [
+        "test_rules::test_required_title"
+      ]
+    },
+    {
+      "case_id": "LINUX-UNIT-002",
+      "requirement_id": "title.required",
+      "target_config_id": "0122042a-a029-522c-8d2f-73654c6ce0dd",
+      "phase": "unit",
+      "framework_case_ids": [
+        "test_rules::test_length_limit"
+      ]
+    },
+    {
+      "case_id": "LINUX-INTEGRATION-001",
+      "requirement_id": "ticket.persisted",
+      "target_config_id": "0122042a-a029-522c-8d2f-73654c6ce0dd",
+      "phase": "integration",
+      "framework_case_ids": [
+        "test_native::test_native_create_persists_after_reopen"
+      ]
+    }
+  ]
+}

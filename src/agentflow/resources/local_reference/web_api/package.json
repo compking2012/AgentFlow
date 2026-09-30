@@ -1,0 +1,19 @@
+{
+  "name": "agentflow-reference-web-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=22.13"},
+  "scripts": {
+    "build": "tsc -p tsconfig.server.json && vite build && node build-bundles.mjs",
+    "start": "node bundle/product/server.js",
+    "test:unit": "node --test --test-reporter=junit --test-reporter-destination=reports/unit.xml tests/unit/domain.test.mjs",
+    "test:api": "playwright test --config=tests/playwright.api.config.mjs",
+    "test:web": "playwright test --config=tests/playwright.web.config.mjs"
+  },
+  "dependencies": {"react": "18.3.1", "react-dom": "18.3.1"},
+  "devDependencies": {
+    "@playwright/test": "1.51.1", "@types/node": "22.10.10", "@types/react": "18.3.18",
+    "@types/react-dom": "18.3.5", "@vitejs/plugin-react": "4.3.4", "typescript": "5.7.3", "vite": "6.1.0"
+  }
+}

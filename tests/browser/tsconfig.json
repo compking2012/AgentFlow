@@ -1,0 +1,7 @@
+{
+  "extends": "../../apps/dashboard/tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"], "typeRoots": ["../../apps/dashboard/node_modules/@types"]
+  },
+  "include": ["*.ts"]
+}

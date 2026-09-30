@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {mkdtempSync,rmSync} from 'node:fs';import {tmpdir} from 'node:os';import path from 'node:path';import {pathToFileURL} from 'node:url';
+const product=process.env.AGENTFLOW_APP_PATH || path.resolve('bundle/product');
+const {TicketStore,validateTitle}=await import(pathToFileURL(path.join(product,'domain.js')));
+test('title validation rejects empty and oversized values',()=>{assert.throws(()=>validateTitle('  '));assert.throws(()=>validateTitle('x'.repeat(121)));assert.equal(validateTitle(' ok '),'ok');});
+test('successful write survives database reopen',()=>{const dir=mkdtempSync(path.join(tmpdir(),'tickets-unit-'));try{const db=path.join(dir,'db.sqlite');let store=new TicketStore(db);const t=store.create('persisted','manager');store.close();store=new TicketStore(db);assert.equal(store.get(t.id).title,'persisted');store.close();}finally{rmSync(dir,{recursive:true,force:true});}});
+test('member cannot mutate an assignment',()=>{const store=new TicketStore(':memory:');const t=store.create('secure','manager');assert.throws(()=>store.assign(t.id,'member','member'),/forbidden/);assert.equal(store.get(t.id).assignee,null);store.close();});

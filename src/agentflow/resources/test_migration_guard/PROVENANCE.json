@@ -1,0 +1,6 @@
+{
+  "parser": "@babel/parser",
+  "version": "7.29.8",
+  "license": "MIT",
+  "build": "node scripts/build_test_migration_guard.mjs"
+}

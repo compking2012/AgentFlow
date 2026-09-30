@@ -1,0 +1,15 @@
+{
+  "name": "agentflow-generated-web-api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=22.13.0"},
+  "scripts": {
+    "build": "node tooling/build.mjs",
+    "start": "node build/product/server.mjs",
+    "test:unit": "node --test --test-reporter=junit --test-reporter-destination=reports/unit.xml build/tests/unit.test.mjs",
+    "test:api": "node build/tests/node_modules/@playwright/test/cli.js test --config=build/tests/playwright.api.config.mjs",
+    "test:web": "node build/tests/node_modules/@playwright/test/cli.js test --config=build/tests/playwright.web.config.mjs"
+  },
+  "devDependencies": {"@playwright/test": "1.63.0"}
+}

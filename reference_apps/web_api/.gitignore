@@ -1,0 +1,8 @@
+node_modules/
+dist/
+bundle/
+.cache/
+.browsers/
+reports/
+test-results/
+playwright-report/

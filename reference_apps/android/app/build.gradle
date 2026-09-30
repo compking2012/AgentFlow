@@ -1,0 +1,43 @@
+plugins { id 'com.android.application'; id 'org.jetbrains.kotlin.android' }
+android {
+    namespace 'local.agentflow.reference'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'local.agentflow.reference.android'
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName '1.0'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    kotlinOptions { jvmTarget = '17' }
+}
+configurations { unitConsole }
+dependencies {
+    implementation 'androidx.core:core-ktx:1.13.1'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test:rules:1.6.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+    unitConsole 'org.junit.platform:junit-platform-console-standalone:1.10.2'
+}
+tasks.register('packageUnitTests', Jar) {
+    dependsOn 'compileDebugUnitTestKotlin'
+    archiveFileName = 'unit-tests.jar'
+    destinationDirectory = file('build/agentflow-tests')
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from('build/tmp/kotlin-classes/debugUnitTest')
+    from('build/tmp/kotlin-classes/debug')
+    from { configurations.unitConsole.collect { zipTree(it) } }
+    from { configurations.debugUnitTestRuntimeClasspath.findAll { it.name.startsWith('kotlin-stdlib') }.collect { zipTree(it) } }
+    manifest { attributes 'Main-Class': 'org.junit.platform.console.ConsoleLauncher' }
+    exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA'
+}
+tasks.register('packageAgentFlowTests', Copy) {
+    dependsOn 'assembleDebugAndroidTest', 'packageUnitTests'
+    from('build/outputs/apk/androidTest/debug/app-debug-androidTest.apk')
+    into('build/agentflow-tests')
+    rename { 'instrumentation.apk' }
+}

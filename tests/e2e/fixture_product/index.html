@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>阅读清单</title><link rel="stylesheet" href="/styles.css"></head>
+<body><main><header><span>READING LIST</span><h1>阅读清单</h1><p>记录想读的书，也记住已经读过的故事。</p></header>
+<form id="book-form"><label>书名<input name="title" required maxlength="120"></label><label>作者<input name="author" maxlength="120"></label><button id="save" type="submit">添加图书</button><button id="cancel" type="button" hidden>取消编辑</button></form>
+<p role="alert" id="error" hidden></p><section><label for="filter">阅读状态</label><select id="filter"><option value="all">全部</option><option value="unread">未读</option><option value="read">已读</option></select><ul id="books" aria-label="图书清单"></ul><p id="empty">还没有图书，添加第一本吧。</p></section></main><script type="module" src="/app.mjs"></script></body>
+</html>

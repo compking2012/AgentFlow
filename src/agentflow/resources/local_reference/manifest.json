@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "name": "AgentFlow local Web/API verification fixture",
+  "files": [
+    {
+      "path": "web_api/package.json",
+      "digest": "sha256:eacee49af17a9feb618de808b1c107802c805f73c944e9d636d9ba813501eea0"
+    },
+    {
+      "path": "web_api/package-lock.json",
+      "digest": "sha256:9d3b6d944e014869cd72480e68d54ac17c10b92aecb99c8d1ff68694ce5d3635"
+    },
+    {
+      "path": "web_api/build-bundles.mjs",
+      "digest": "sha256:a01aa972e78a425bd8dd6f74a5ad5e42a509696aef0453e1610b7470935a3226"
+    },
+    {
+      "path": "web_api/index.html",
+      "digest": "sha256:c086064273c3c47edaa76acc5ebcf1ca59ab86ab91a66b2b3daaebbc0834fa98"
+    },
+    {
+      "path": "web_api/tsconfig.server.json",
+      "digest": "sha256:9b50143c6dea1394c3c8f83db4b05d35a5828f3e0c50e26eca73c81c38e4636e"
+    },
+    {
+      "path": "web_api/vite.config.ts",
+      "digest": "sha256:b74c18ad03b7d5c854f15c5a73bf32b2fec6da5f7e539279f1109e3a441c6ce7"
+    },
+    {
+      "path": "web_api/src/server/server.ts",
+      "digest": "sha256:00696073b2cfa5cfaf82599cfc564856701813128b3c6b3d8e620f647dcc5619"
+    },
+    {
+      "path": "web_api/src/server/domain.ts",
+      "digest": "sha256:f2d3b601209558f01b6a44a09ae5e9125beb24d99b912a2a2799423ba3969086"
+    },
+    {
+      "path": "web_api/src/main.tsx",
+      "digest": "sha256:73be12b69b0598a871b834a1a0febe06b7f5f1ebf0930909cd8b8bfef2d17579"
+    },
+    {
+      "path": "web_api/src/style.css",
+      "digest": "sha256:dc8926d999c5cd3f5f55cafd8b48fa5f458c41f50ca59cc28ae93eb123a80c61"
+    },
+    {
+      "path": "web_api/tests/config-base.mjs",
+      "digest": "sha256:179ab5ede2a9ae8c44a79dadcfbed64d9a3648688709540b9d48b1e99634fa42"
+    },
+    {
+      "path": "web_api/tests/playwright.api.config.mjs",
+      "digest": "sha256:5a1b6c39a478e67bb88cf6efdc96d39f521de2fdd635cd4ca4016ff7e2e35df8"
+    },
+    {
+      "path": "web_api/tests/playwright.web.config.mjs",
+      "digest": "sha256:6cfeb292280c648c27a7306496287c8039230fe0969e5efec7a057765a7c9649"
+    },
+    {
+      "path": "web_api/tests/api/tickets.spec.ts",
+      "digest": "sha256:9bf685ce4430fa9e34f819a0ff7dad8ad670d44f62cb1a9ec7425ead70245ab2"
+    },
+    {
+      "path": "web_api/tests/web/tickets.spec.ts",
+      "digest": "sha256:95f7841c5f3bbeeb6c989d097d26b796d2d3ecd93b6928c4e8730c8a7fdb6212"
+    },
+    {
+      "path": "web_api/tests/unit/domain.test.mjs",
+      "digest": "sha256:2c4bf4cbc3bfc3f3a8e938a98047ea5475ad14d50d4ea153f75fca5f9467d08e"
+    }
+  ],
+  "unit_case_ids": [
+    "test::title validation rejects empty and oversized values",
+    "test::successful write survives database reopen",
+    "test::member cannot mutate an assignment"
+  ],
+  "api_case_ids": [
+    "tickets.spec.ts::create and reread returns the same persisted ticket::",
+    "tickets.spec.ts::authorization failure leaves assignment unchanged::",
+    "tickets.spec.ts::invalid title and missing authentication are rejected::"
+  ],
+  "web_case_ids": [
+    "tickets.spec.ts::created ticket remains after browser reload::",
+    "tickets.spec.ts::member assignment is rejected in UI and database::"
+  ]
+}

@@ -1,0 +1,9 @@
+node_modules/
+build/
+reports/
+test-results/
+.agentflow-product-data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+.DS_Store

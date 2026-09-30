@@ -1,0 +1,155 @@
+[
+  {
+    "children": [
+      {
+        "goal": "扩充 src/holidayData.mjs：为全部国际节日规则补齐 emoji，新增圣帕特里克节(3/17,🍀)与万圣节(11/1,👻)固定条目，并新增复活节与黑色星期五的派生规则数据（INTERNATIONAL_DERIVED）；保持纯数据、不含计算、不改动 STATUTORY_HOLIDAYS。",
+        "key": "impl-festival-rule-data",
+        "write_paths": [
+          "src/holidayData.mjs"
+        ]
+      },
+      {
+        "goal": "在 src/festivals.mjs 实现 easterSunday(year)（匿名格列高利 computus，按年 memoize）与黑色星期五（感恩节次日）解析，并让 festivalsForDate/listFestivals 透传 emoji（仅 international 且规则定义图标时）；农历范围外仍返回洋节与 emoji。",
+        "key": "impl-festival-aggregate",
+        "write_paths": [
+          "src/festivals.mjs"
+        ]
+      },
+      {
+        "goal": "在 public/ 用统一标签逻辑把国际节日渲染为「emoji + 名称」（调休保持 班·名称），标签带含节日全名的 title/aria-label，图例补充洋节 emoji 说明，emoji 唯一来源为 /api/festivals。",
+        "key": "impl-web-emoji",
+        "write_paths": [
+          "public/app.mjs",
+          "public/styles.css",
+          "public/index.html"
+        ]
+      }
+    ],
+    "stage_key": "implementation"
+  },
+  {
+    "children": [
+      {
+        "goal": "审查 src/holidayData.mjs 与 src/festivals.mjs：洋节数据与 emoji 仅属 international、复活节/黑色星期五规则正确、农历范围外洋节仍返回、农历与法定条目无 emoji、既有固定/浮动规则与 STATUTORY_HOLIDAYS 未被破坏。",
+        "key": "review-code-festival",
+        "review_focus": "current_code",
+        "write_paths": [
+          "src/holidayData.mjs",
+          "src/festivals.mjs"
+        ]
+      },
+      {
+        "goal": "审查 public/：日历格/周视图/日视图标签一致且为「emoji + 名称」、emoji 不替代名称、图例含洋节说明、未在前端重复维护节日或 emoji 映射，且日程交互、优先级/重要性、空状态与 503 横幅未回归。",
+        "key": "review-code-web",
+        "review_focus": "current_code",
+        "write_paths": [
+          "public/app.mjs",
+          "public/styles.css",
+          "public/index.html"
+        ]
+      },
+      {
+        "goal": "比对冻结提交 0273fb8，检查本次实现是否删除或弱化既有测试或支持文件、是否改动冻结边界与构建/测试契约，并列出任何回归或篡改。",
+        "key": "review-code-regressions",
+        "review_focus": "existing_test_regressions",
+        "write_paths": []
+      }
+    ],
+    "stage_key": "code_review"
+  },
+  {
+    "children": [
+      {
+        "goal": "定义节日子系统单元用例标题（规范 ID test::<title>）：固定日新洋节、浮动与派生节日、复活节 computus、黑色星期五、emoji 仅 international 出现、农历/法定/调休无 emoji、农历范围外洋节仍返回、同日多节日各自保留 emoji；保留与本次无关的既有节日用例标题。",
+        "key": "plan-unit-festival",
+        "write_paths": []
+      },
+      {
+        "goal": "定义日程/校验/仓储/路由相关单元用例标题并保留既有稳定用例，明确本次不受影响；规范 ID 为 test::<title>，仅定义用例不写实现。",
+        "key": "plan-unit-core",
+        "write_paths": []
+      }
+    ],
+    "stage_key": "unit_test_plan"
+  },
+  {
+    "children": [
+      {
+        "goal": "对照已接受单元计划核验 tests/unit.test.mjs 的洋节与 emoji 用例覆盖完整、ID 与计划一致、断言有意义、无空跑，且无该阶段占位残留。",
+        "key": "review-unit-festival",
+        "review_focus": "unit_test_coverage",
+        "write_paths": [
+          "tests/unit.test.mjs"
+        ]
+      },
+      {
+        "goal": "核验单元测试实现未删除或弱化既有用例、未改动测试支持文件契约。",
+        "key": "review-unit-regressions",
+        "review_focus": "existing_test_regressions",
+        "write_paths": []
+      }
+    ],
+    "stage_key": "unit_test_implementation:review"
+  },
+  {
+    "children": [
+      {
+        "goal": "定义 tests/api.spec.mjs 的精确用例标题与 expected_case_ids（api.spec.mjs::<title>::），新增/更新节日接口 emoji 字段与新增洋节断言，并保留既有 AC-01—AC-08 用例标题。",
+        "key": "plan-int-api",
+        "write_paths": []
+      },
+      {
+        "goal": "定义 tests/web.spec.mjs 的精确用例标题与 expected_case_ids（web.spec.mjs::<title>::），新增/更新洋节「emoji + 名称」渲染与图例用例，覆盖 AC-09/AC-10 并保留既有旅程用例标题。",
+        "key": "plan-int-web",
+        "write_paths": []
+      }
+    ],
+    "stage_key": "integration_test_strategy"
+  },
+  {
+    "children": [
+      {
+        "goal": "在 tests/api.spec.mjs 用计划中的精确用例标题替换/新增断言：覆盖日程 CRUD 正常/非法/状态转移/持久化、节日接口 emoji 与新增洋节、错误映射；不弱化断言、不改动其他测试或支持文件。",
+        "key": "int-impl-api",
+        "write_paths": [
+          "tests/api.spec.mjs"
+        ]
+      },
+      {
+        "goal": "在 tests/web.spec.mjs 用计划中的精确用例标题替换/新增浏览器旅程：洋节 emoji 渲染与全站一致、图例洋节说明，覆盖 AC-09/AC-10 及既有 AC-01—AC-08；沿用 fixtures/config，不新增支持文件、不弱化断言。",
+        "key": "int-impl-web",
+        "write_paths": [
+          "tests/web.spec.mjs"
+        ]
+      }
+    ],
+    "stage_key": "integration_test_implementation"
+  },
+  {
+    "children": [
+      {
+        "goal": "对照已接受 API 计划与 expected_case_ids 核验 tests/api.spec.mjs 覆盖节日 emoji 字段、新增洋节与既有 CRUD/错误映射，断言有意义、ID 精确、无占位残留。",
+        "key": "review-int-api",
+        "review_focus": "integration_test_coverage",
+        "write_paths": [
+          "tests/api.spec.mjs"
+        ]
+      },
+      {
+        "goal": "对照已接受 Web 计划与 expected_case_ids 核验 tests/web.spec.mjs 覆盖 AC-09/AC-10 洋节 emoji 渲染与既有旅程，选择器稳定、断言有意义、ID 精确、无占位残留。",
+        "key": "review-int-web",
+        "review_focus": "integration_test_coverage",
+        "write_paths": [
+          "tests/web.spec.mjs"
+        ]
+      },
+      {
+        "goal": "核验集成测试实现未删除或弱化既有用例、api.spec 与 web.spec 保持分离、fixtures/global-setup/config/productProcess 契约未被破坏。",
+        "key": "review-int-regressions",
+        "review_focus": "existing_test_regressions",
+        "write_paths": []
+      }
+    ],
+    "stage_key": "integration_test_implementation:review"
+  }
+]

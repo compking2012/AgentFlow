@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net8.0-windows</TargetFramework><UseWPF>true</UseWPF><IsTestProject>true</IsTestProject><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><RestorePackagesWithLockFile>true</RestorePackagesWithLockFile></PropertyGroup>
+  <ItemGroup><ProjectReference Include="../TicketClient/TicketClient.csproj"/></ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1"/>
+    <PackageReference Include="NUnit" Version="4.2.2"/>
+    <PackageReference Include="NUnit3TestAdapter" Version="4.6.0"/>
+    <PackageReference Include="JunitXml.TestLogger" Version="4.0.254"/>
+    <PackageReference Include="FlaUI.UIA3" Version="4.0.0"/>
+  </ItemGroup>
+</Project>
