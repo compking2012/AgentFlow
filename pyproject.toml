@@ -33,7 +33,7 @@ packages = ["src/agentflow", "src/node_agent"]
 "contracts/design.openapi.json" = "agentflow/design.openapi.json"
 
 [tool.hatch.build.targets.sdist]
-include = ["/src", "/apps/dashboard", "/tests", "/reference_apps", "/contracts", "/scripts", "/README.md", "/LICENSE", "/CONTRIBUTING.md", "/SECURITY.md", "/pyproject.toml", "/uv.lock", "/.python-version"]
+include = ["/src", "/apps/dashboard", "/tests", "/reference_apps", "/contracts", "/scripts", "/README.md", "/README.zh-CN.md", "/LICENSE", "/CONTRIBUTING.md", "/SECURITY.md", "/pyproject.toml", "/uv.lock", "/.python-version"]
 exclude = ["**/node_modules", "**/.playwright-browsers", "**/.cache", "**/__pycache__", "/tests/browser/artifacts", "/tests/browser/report", "**/.pytest_cache", "**/test-results"]
 
 [tool.pytest.ini_options]
