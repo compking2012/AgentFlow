@@ -13,6 +13,7 @@ from weakref import WeakValueDictionary
 from agentflow.common import DomainError, canonical_digest
 from agentflow.control.prior_review import PRIOR_REVIEW_INSTRUCTIONS, prior_review_evidence
 from agentflow.control.test_runtime_review import (
+    MISSING_CASE_REVIEW_INSTRUCTIONS,
     TEST_RUNTIME_REVIEW_INSTRUCTIONS,
     test_runtime_review_evidence,
 )
@@ -238,7 +239,8 @@ class StageContext:
         if prior_review is not None:
             lines.append(PRIOR_REVIEW_INSTRUCTIONS)
         if runtime_review is not None:
-            lines.append(TEST_RUNTIME_REVIEW_INSTRUCTIONS)
+            lines.append(MISSING_CASE_REVIEW_INSTRUCTIONS if runtime_review.get('repair_kind') == 'missing_required_cases'
+                         else TEST_RUNTIME_REVIEW_INSTRUCTIONS)
         remaining = self.INLINE_LIMIT
         for entry in entries:
             label = (f"project_document_baseline:{entry['logical_stage_key']}"
@@ -250,6 +252,7 @@ class StageContext:
                 remaining -= len(content)
         return {'text': '\n'.join(lines), 'directory': directory, 'review_phase_contract': phase_contract,
                 'test_runtime_review': runtime_review is not None,
+                'test_repair_kind': runtime_review.get('repair_kind') if runtime_review else None,
                 'documents': [{k: v for k, v in e.items() if k != 'data'} for e in entries]}
 
     def _write(self, directory, entries):

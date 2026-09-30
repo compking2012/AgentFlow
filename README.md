@@ -6,8 +6,6 @@ A local-first, single-owner workspace for agent-driven software delivery. Give a
 
 The current primary workflow supports Node.js Web/API products on macOS, with five everyday commands. Native platforms can be recorded as product metadata, but automated native-product execution is not currently supported.
 
-For the full design, see [PRD v0.8](docs/AgentFlow-PRD-v0.8.md) and [MVP architecture v0.6](docs/AgentFlow-MVP-产品工作台架构与实现方案-v0.6.md). Detailed design and operations documents are currently in Chinese.
-
 ## Install the Development Version
 
 Prerequisites: macOS, Python 3.12, Git, uv, Node.js 22.13+, npm 10+, and a supported Codex CLI. Install the specialist-role runtime with the dependencies below. Coding uses your configured model API; a personal subscription login does not replace provider configuration.
@@ -23,6 +21,8 @@ agentflow start
 ```
 
 On first launch, AgentFlow creates a private configuration file at **`~/.config/agentflow/config.toml`**. Configure your model provider in the dashboard before submitting a goal. See the [local operations guide](docs/local-operations.md) for configuration details; paths labeled as the maintainer's current Mac environment are examples and must be adapted to your machine.
+
+While the service is running, open `http://127.0.0.1:8787` directly (or your configured port). New tabs and controller restarts do not require a startup link. The service still starts manually; no login autostart is installed.
 
 ## Everyday Commands
 

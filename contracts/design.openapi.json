@@ -60,6 +60,25 @@
     }
   ],
   "paths": {
+    "/api/v1/session/local": {
+      "post": {
+        "operationId": "create_local_browser_session",
+        "tags": ["session"],
+        "summary": "同源回环客户端直接建立本机Owner会话，无需启动码",
+        "description": "精确Host与Origin、回环客户端地址和幂等键必需；拒绝跨站Fetch Metadata。无Cookie，不缓存响应，不开放匿名管理接口。",
+        "security": [],
+        "parameters": [
+          {"$ref": "#/components/parameters/IdempotencyKey"},
+          {"$ref": "#/components/parameters/Origin"}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SessionLocalRequest"}}}},
+        "responses": {
+          "201": {"description": "建立管理凭据和仅能续接的浏览器票据", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SessionBootstrapResponse"}}}},
+          "403": {"$ref": "#/components/responses/Error403"},
+          "422": {"$ref": "#/components/responses/Error422"}
+        }
+      }
+    },
     "/api/v1/session": {
       "post": {
         "operationId": "bootstrap_local_session",
@@ -4682,6 +4701,11 @@
         ],
         "additionalProperties": false,
         "description": "accepted仅表示SQLite事务已提交，不表示Agent已开始或门禁通过。"
+      },
+      "SessionLocalRequest": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
       },
       "SessionBootstrapRequest": {
         "type": "object",

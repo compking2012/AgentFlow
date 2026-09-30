@@ -24,11 +24,15 @@ async def patch(env, kind, identity, **changes):
     return await env.store.command('fixture.test-runtime', str(uuid4()), {}, apply)
 
 
-async def failed_candidate(env, *, phase='unit', environment_error=True, failure_message=None):
+async def failed_candidate(env, *, phase='unit', environment_error=True, failure_message=None, missing_case=False):
     tests = env.source / 'tests'
     tests.mkdir()
     for name in ('unit.test.mjs', 'api.spec.mjs', 'web.spec.mjs'):
         (tests / name).write_text('import assert from "node:assert/strict";\nassert.equal(1, 1);\n')
+    if missing_case:
+        (tests / 'unit.test.mjs').write_text('import assert from "node:assert/strict";\n'
+            'import test from "node:test";\n'
+            "test('target-0::unit::denied', () => { assert.equal(1, 1); });\n")
     frozen = await env.repository.freeze_workspace(env.source, env.snapshot['commit_oid'], 'runtime fixture source')
     await patch(env, 'code_snapshot', 'code-snapshot', commit_oid=frozen['commit_oid'], tree_oid=frozen['tree_oid'])
     async def source(_run, _work):
@@ -60,13 +64,13 @@ async def failed_candidate(env, *, phase='unit', environment_error=True, failure
             message = failure_message or ('listen EPERM: operation not permitted 127.0.0.1'
                                            if environment_error else 'expected 1 to equal 2')
             cases = ''.join(f'<testcase name={quoteattr(case)} fullname={quoteattr(case)}>'
-                + (f'<failure>{message}</failure>' if index == 0 else '') + '</testcase>'
-                for index, case in enumerate(entry['framework_case_ids']))
+                + (f'<failure>{message}</failure>' if index == 0 and not missing_case else '') + '</testcase>'
+                for index, case in enumerate(entry['framework_case_ids']) if not missing_case or index != 0)
             artifact = await env.nodes.import_input(f'<testsuite>{cases}</testsuite>'.encode(), 'junit.xml', 'run')
             parsed = parse_junit(env.nodes.artifacts.object_path(artifact['digest']), set(entry['framework_case_ids']))
             checks.append({'matrix_entry_id': entry['matrix_entry_id'], 'raw_report_artifact_version_id': artifact['id'],
                            'normalized_report': parsed.model_dump(mode='json')})
-        await env._receipt(identity, 'completed', 'failed', 'validated', checks=checks)
+        await env._receipt(identity, 'completed', 'unknown' if missing_case else 'failed', 'validated', checks=checks)
     await env.pipeline.reconcile()
     await patch(env, 'run', 'run', execution_state='paused')
     return {'expected_revision': (await env.store.read('product', 'product'))['revision'],
@@ -79,6 +83,36 @@ async def request_repair(env, payload, key='runtime-repair'):
     from agentflow.control.product_models import ProductTestRuntimeRepairRequest
     return await ProductTestRepair(env.store, env.workflow, nodes=env.nodes).repair_runtime(
         'product', ProductTestRuntimeRepairRequest.model_validate(payload), key)
+
+
+async def test_missing_required_cases_authorize_only_scoped_test_completion(tmp_path):
+    async with fixture(tmp_path, app_targets=('api',)) as env:
+        payload = await failed_candidate(env, missing_case=True)
+        await patch(env, 'node_job', payload['failed_job_id'], state='failed')
+        candidate = await env.store.read('candidate', payload['candidate_id'])
+        result = await request_repair(env, payload)
+        work = await env.store.read('work_item', result['repair_work_item_id'])
+        assert work['write_paths'] == ['tests/unit.test.mjs']
+        assert 'keep all existing IDs and assertions unchanged' in work['payload']['change_expectation']
+        assert await env.store.read('candidate', candidate['id']) == candidate
+
+
+@pytest.mark.parametrize('quality,expected', [('unknown', True), ('inconclusive', True), ('passed', False)])
+def test_completed_execution_requires_passed_quality(quality, expected):
+    from agentflow.control.products import ProductService
+    assert ProductService._failed_work({'step': 'unit_test_execution', 'status': 'completed',
+                                       'quality_result': quality}) is expected
+    assert not ProductService._failed_work({'step': 'implementation', 'status': 'completed',
+                                           'quality_result': 'unknown'})
+
+
+@pytest.mark.parametrize('changes', [{'errors': ['missing_required_cases', 'runner_error']},
+    {'missing_case_ids': []}, {'cases': [{'status': 'skipped'}]}, {'execution_status': 'completed'}])
+def test_missing_case_authorization_rejects_other_incomplete_evidence(changes):
+    report = {'execution_status': 'error', 'quality_result': 'unknown',
+              'errors': ['missing_required_cases'], 'missing_case_ids': ['test::missing'],
+              'cases': [{'status': 'passed'}]}
+    assert not ProductTestRepair._missing_case_report({**report, **changes})
 
 
 @pytest.mark.parametrize(('phase', 'target', 'path', 'step'), [

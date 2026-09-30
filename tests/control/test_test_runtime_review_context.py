@@ -13,11 +13,12 @@ from agentflow.control.scheduler import Scheduler
 
 
 @asynccontextmanager
-async def reviewed_runtime_repair(tmp_path):
+async def reviewed_runtime_repair(tmp_path, *, missing_case=False):
     async with fixture(tmp_path, app_targets=('web',)) as env:
         (env.source / 'public').mkdir()
         (env.source / 'public/layers.mjs').write_text('export const zIndex = 500; // already accepted\n')
-        request = await failed_candidate(env, phase='integration', environment_error=False)
+        request = await failed_candidate(env, phase='unit' if missing_case else 'integration',
+                                         environment_error=False, missing_case=missing_case)
         request['reason'] = 'Disambiguate the exact control and wait for observed initialization; preserve assertions and thresholds.'
         receipt = await request_repair(env, request)
         candidate = await env.store.read('candidate', receipt['candidate_id'])
@@ -28,8 +29,10 @@ async def reviewed_runtime_repair(tmp_path):
         source, base = await scheduler._source(claim['run'], claim['work_item'])
         workspace = tmp_path / 'runtime-repair'
         await env.repository.clone_snapshot(source, workspace, base)
-        target = workspace / 'tests/web.spec.mjs'
-        target.write_text(target.read_text() + "\n// Locate the intended control only.\nconst control = page.getByRole('button', { name: '保存', exact: true });\n")
+        target = workspace / ('tests/unit.test.mjs' if missing_case else 'tests/web.spec.mjs')
+        addition = ("\ntest('target-0::unit::normal', () => { assert.equal(2, 2); });\n" if missing_case else
+            "\n// Locate the intended control only.\nconst control = page.getByRole('button', { name: '保存', exact: true });\n")
+        target.write_text(target.read_text() + addition)
         work, attempt = claim['work_item'], claim['attempt']
         task = {'attempt_id': attempt['id'], 'work_item_id': work['id'], 'run_id': 'run', 'iteration_id': 'iteration',
             'step': work['step'], 'fencing_token': attempt['fencing_token'], 'input_fingerprint': attempt['input_fingerprint'],
@@ -42,6 +45,60 @@ async def reviewed_runtime_repair(tmp_path):
         env.scheduler, env.candidate_record, env.repair_receipt = scheduler, candidate, receipt
         env.review_claim = review_claim
         yield env
+
+
+async def test_missing_case_repair_builds_authorized_independent_context(tmp_path):
+    async with reviewed_runtime_repair(tmp_path, missing_case=True) as env:
+        prompt, _, evidence = await context_for(env)
+        assert evidence[0]['repair_kind'] == 'missing_required_cases'
+        assert evidence[0]['frozen_required_cases'][0]['missing_case_ids']
+        assert "assert.equal(2, 2)" in evidence[0]['patch']
+        assert 'substantive assertions' in prompt and 'New tests are permitted' in prompt
+        assert 'Permitted runtime repairs are' not in prompt
+        assert 'Reject any test case, assertion or expectation changes' not in prompt
+        assert evidence[0]['quality_result'] == 'not_assessed'
+        assert (await env.store.read('work_item', env.review_claim['work_item']['id']))['quality_result'] == 'unknown'
+
+
+@pytest.mark.parametrize('damage', ['raw_bytes', 'required_ids', 'receipt_kind', 'outside_scope', 'remove_original',
+                                  'weaken_assertion', 'report_missing_ids', 'skipped_report'])
+async def test_missing_case_review_rejects_invalid_evidence_or_changes(tmp_path, damage):
+    async with reviewed_runtime_repair(tmp_path, missing_case=True) as env:
+        receipt = await env.store.read('product_test_runtime_repair', env.repair_receipt['repair_work_item_id'])
+        if damage == 'raw_bytes':
+            raw = env.nodes.artifacts.object_path(receipt['evidence'][0]['artifact']['digest'])
+            raw.chmod(0o600)
+            raw.write_text('<testsuite/>')
+        elif damage == 'required_ids':
+            candidate = await env.store.read('candidate', receipt['candidate_id'])
+            mappings = candidate['matrix_mappings']
+            mappings[receipt['evidence'][0]['matrix_entry_id']]['framework_case_ids'].append('invented')
+            await patch(env, 'candidate', candidate['id'], matrix_mappings=mappings)
+        elif damage == 'receipt_kind':
+            await patch(env, 'product_test_runtime_repair', receipt['id'], repair_kind='runtime_setup')
+        elif damage in {'report_missing_ids', 'skipped_report'}:
+            evidence = receipt['evidence']
+            if damage == 'report_missing_ids':
+                evidence[0]['report']['missing_case_ids'] = ['invented']
+            else:
+                evidence[0]['report']['cases'][0]['status'] = 'skipped'
+            await patch(env, 'product_test_runtime_repair', receipt['id'], evidence=evidence)
+        else:
+            producer = await env.store.read('work_item', receipt['repair_work_item_id'])
+            snapshot = await env.store.read('code_snapshot', producer['attempt_id'])
+            from pathlib import Path
+            workspace = Path(snapshot['repository_path'])
+            if damage == 'outside_scope':
+                (workspace / 'public/layers.mjs').write_text('export const zIndex = 1;\n')
+            elif damage == 'weaken_assertion':
+                target = workspace / 'tests/unit.test.mjs'
+                target.write_text(target.read_text().replace('assert.equal(1, 1)', 'assert.ok(true)'))
+            else:
+                (workspace / 'tests/unit.test.mjs').write_text('const changed = true;\n')
+            frozen = await env.repository.freeze_workspace(workspace, snapshot['commit_oid'], 'damaged test repair')
+            await patch(env, 'code_snapshot', snapshot['id'], commit_oid=frozen['commit_oid'], tree_oid=frozen['tree_oid'])
+        with pytest.raises(DomainError):
+            await context_for(env)
 
 
 async def context_for(env, *, source_commit=None):

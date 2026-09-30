@@ -104,8 +104,7 @@ class TokenAuthority:
         owners = self._browser_sessions.get(digest)
         if owners is None:
             raise DomainError('unauthorized', 'Browser continuation is unavailable', 401)
-        # Tokens are process-local. A controller restart requires its local launch
-        # link; no ticket grants authority to a different controller process.
+        # Tokens are process-local; a new controller needs a fresh local session.
         principal = self._tokens[digest]
         self._tokens[digest] = Principal(principal.audience, principal.scopes, principal.subject,
                                          self._clock() + 7 * 86400)

@@ -11,6 +11,14 @@ type Page = Playwright.Page;
 type Server = { origin: string; bootstrap: string; fixture_key: string; directory: string; approval_id: string; fingerprint: string; run: string; item: string; node_fingerprint?: string };
 const repository = path.resolve(import.meta.dirname, '../..');
 
+async function exposeOwnerApi(page: Page) {
+  const { buildSync } = createRequire(import.meta.url)('../../apps/dashboard/node_modules/esbuild');
+  const result = buildSync({ entryPoints: [path.join(repository, 'apps/dashboard/src/api.ts')],
+    bundle: true, format: 'esm', write: false });
+  await page.route('**/__test-owner-api.js', route => route.fulfill({ contentType: 'text/javascript',
+    body: result.outputFiles[0].text }));
+}
+
 const test = base.extend<{ server: Server; executor: boolean }>({
   executor: [false, { option: true }],
   server: async ({ page, executor }, use) => {
@@ -708,6 +716,100 @@ test('expired owner authentication is renewed transparently without reissuing bo
   await expect(page.getByRole('heading', { name: '创建产品', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: '打开本机工作台' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: '锁定工作台' })).toHaveCount(0);
+});
+
+test('direct local access works in a new tab and after a stale browser ticket', async ({ page, server }) => {
+  await page.goto(server.origin);
+  await expect(page.getByRole('heading', { name: '创建产品', exact: true })).toBeVisible();
+  expect(page.url()).not.toContain('bootstrap');
+  expect(await page.evaluate(() => [localStorage.length, sessionStorage.length, document.cookie])).toEqual([0, 1, '']);
+  await page.evaluate(() => sessionStorage.setItem(`agentflow.browser-session.v1:${location.origin}`, 'stale-controller-ticket'));
+  await page.reload();
+  await expect(page.getByRole('heading', { name: '创建产品', exact: true })).toBeVisible();
+  expect(await page.evaluate(() => sessionStorage.getItem(`agentflow.browser-session.v1:${location.origin}`))).not.toBe('stale-controller-ticket');
+  const fresh = await page.context().browser()!.newContext();
+  try {
+    const tab = await fresh.newPage();
+    await tab.goto(server.origin);
+    await expect(tab.getByRole('heading', { name: '创建产品', exact: true })).toBeVisible();
+  } finally { await fresh.close(); }
+});
+
+test('direct local access reconnects without optional tab storage', async ({ page, server }) => {
+  await page.addInitScript(() => {
+    Storage.prototype.getItem = () => { throw new Error('storage unavailable'); };
+    Storage.prototype.setItem = () => { throw new Error('storage unavailable'); };
+    Storage.prototype.removeItem = () => { throw new Error('storage unavailable'); };
+  });
+  await page.goto(server.origin);
+  await expect(page.getByRole('heading', { name: '创建产品', exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: '创建产品', exact: true })).toBeVisible();
+});
+
+test('rejected session renewal establishes local authority before retrying a command once with its original key', async ({ page, server }) => {
+  await exposeOwnerApi(page);
+  await page.goto(server.origin);
+  await expect(page.getByRole('heading', { name: '创建产品', exact: true })).toBeVisible();
+  let commandCount = 0; let localCount = 0; const keys: string[] = [];
+  await page.route('**/api/v1/session/resume', route => route.fulfill({ status: 401, contentType: 'application/json',
+    body: JSON.stringify({ error: { code: 'unauthorized', message: 'Previous controller ended' } }) }));
+  page.on('request', request => { if (request.url().endsWith('/api/v1/session/local')) localCount += 1; });
+  await page.route('**/api/v1/projects', route => {
+    if (route.request().method() !== 'POST') return route.continue();
+    commandCount += 1; keys.push(route.request().headers()['idempotency-key']);
+    return route.fulfill({ status: commandCount === 1 ? 401 : 200, contentType: 'application/json',
+      body: JSON.stringify(commandCount === 1 ? { error: { code: 'unauthorized', message: 'Expired owner' } } : { connected: true }) });
+  });
+  const result = await page.evaluate(async () => {
+    const modulePath = '/__test-owner-api.js';
+    const { OwnerApi } = await import(modulePath);
+    const api = new OwnerApi(); await api.restore();
+    return api.command('/api/v1/projects', { name: 'Safe replay' }, 'original-command-key');
+  });
+  expect(result).toEqual({ connected: true });
+  expect(commandCount).toBe(2); expect(keys).toEqual(['original-command-key', 'original-command-key']);
+  expect(localCount).toBe(2);
+});
+
+for (const failure of ['forbidden', 'network', 'unknown-401', 'renew-forbidden', 'second-401']) {
+  test(`local session does not repeat commands after ${failure}`, async ({ page, server }) => {
+    await exposeOwnerApi(page);
+    await page.goto(server.origin);
+    await expect(page.getByRole('heading', { name: '创建产品', exact: true })).toBeVisible();
+    let posts = 0; let localPosts = 0; let renewals = 0;
+    page.on('request', request => { if (request.url().endsWith('/api/v1/session/local')) localPosts += 1; });
+    if (failure === 'renew-forbidden') {
+      await page.route('**/api/v1/session/resume', route => ++renewals === 1 ? route.continue() :
+        route.fulfill({ status: 403, contentType: 'application/json',
+          body: JSON.stringify({ error: { code: 'forbidden', message: 'Wrong scope' } }) }));
+    }
+    await page.route('**/api/v1/projects', route => {
+      if (route.request().method() !== 'POST') return route.continue();
+      posts += 1;
+      if (failure === 'network') return route.abort('connectionfailed');
+      return route.fulfill({ status: failure === 'forbidden' ? 403 : 401, contentType: 'application/json',
+        body: JSON.stringify({ error: { code: failure === 'forbidden' ? 'forbidden' : failure === 'unknown-401' ? 'business_unknown' : 'unauthorized', message: 'Not accepted' } }) });
+    });
+    const error = await page.evaluate(async () => {
+      const modulePath = '/__test-owner-api.js';
+      const { OwnerApi } = await import(modulePath); const api = new OwnerApi(); await api.restore();
+      try { await api.command('/api/v1/projects', {}, 'no-duplicate-command'); return null; }
+      catch (error) { return (error as { code: string }).code; }
+    });
+    expect(error).toBeTruthy(); expect(posts).toBe(failure === 'second-401' ? 2 : 1);
+    expect(localPosts).toBe(0);
+  });
+}
+
+test('local connection failure can be retried from the page without a startup link', async ({ page, server }) => {
+  let blocked = true;
+  await page.route('**/api/v1/session/local', route => blocked ? route.abort('connectionfailed') : route.continue());
+  await page.goto(server.origin);
+  await expect(page.getByRole('button', { name: '重新连接', exact: true })).toBeVisible();
+  blocked = false;
+  await page.getByRole('button', { name: '重新连接', exact: true }).click();
+  await expect(page.getByRole('heading', { name: '创建产品', exact: true })).toBeVisible();
 });
 
 test('an explicitly opened retained history remains selected when its product leaves the active list', async ({ page, server }) => {

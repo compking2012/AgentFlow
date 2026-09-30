@@ -8,6 +8,11 @@ from pathlib import Path
 from uuid import uuid4
 
 from agentflow.common import DomainError, canonical_digest, utc_now
+from agentflow.control.test_repair_evidence import (
+    MISSING_CASE_REPAIR_SCOPE,
+    test_repair_kind,
+    test_repair_report_kind,
+)
 from agentflow.domain.planning import EXECUTION_STEPS, descendants
 from agentflow.execution.manifests import file_digest
 from agentflow.models.budget import account_id
@@ -16,6 +21,10 @@ from agentflow.models.budget import account_id
 class ProductTestRepair:
     def __init__(self, store, workflow, *, limit=None, nodes=None):
         self.store, self.workflow, self.limit, self.nodes = store, workflow, limit, nodes
+
+    @staticmethod
+    def _missing_case_report(report):
+        return test_repair_report_kind(report) == 'missing_required_cases'
 
     def _automatic_allowed(self, tx, product_id):
         limit = self.workflow.settings.auto_test_repair_limit if self.limit is None else self.limit
@@ -302,8 +311,8 @@ class ProductTestRepair:
         candidate = tx.get('candidate', request.candidate_id)
         job = tx.get('node_job', request.failed_job_id)
         if (not candidate or candidate.get('run_id') != run['id'] or candidate.get('stale')
-                or not job or job.get('run_id') != run['id'] or job.get('quality_result') != 'failed'
-                or job.get('state') != 'completed' or not job.get('result_id')
+                or not job or job.get('run_id') != run['id'] or job.get('quality_result') not in {'failed', 'unknown'}
+                or job.get('state') not in {'completed', 'failed'} or not job.get('result_id')
                 or job.get('target_config') not in candidate.get('matrix_plan', {}).get('target_configs', [])
                 or (job.get('platform_artifact_manifest') or {}).get('fingerprint') != candidate.get('fingerprint')
                 or (job.get('source_manifest') or {}).get('fingerprint') != candidate.get('source_manifest', {}).get('fingerprint')):
@@ -427,7 +436,8 @@ class ProductTestRepair:
                     or frozen.get('target_config_id') != job['target_config']['target_config_id']
                     or matrix.get('framework_case_ids') != frozen.get('framework_case_ids')
                     or not artifact or artifact.get('state') != 'complete' or not parser
-                    or report.get('execution_status') != 'completed' or report.get('errors') or report.get('missing_case_ids')
+                    or (not self._missing_case_report(report) and
+                        (report.get('execution_status') != 'completed' or report.get('errors') or report.get('missing_case_ids')))
                     or report.get('raw_digest') != artifact.get('digest')):
                 raise self._runtime_error()
             path = (self.nodes.artifacts.object_path(artifact['digest']) if self.nodes else
@@ -439,9 +449,8 @@ class ProductTestRepair:
             except (OSError, ValueError, TypeError, KeyError) as error:
                 raise self._runtime_error() from error
             evidence.append({'artifact': artifact, 'report': report, 'matrix_entry_id': check['matrix_entry_id']})
-        if (set(entries) != {e['matrix_entry_id'] for e in evidence}
-                or not any(e['report']['quality_result'] == 'failed' and any(c['status'] in {'failed', 'error'}
-                    for c in e['report']['cases']) for e in evidence)):
+        repair_kind = test_repair_kind([entry['report'] for entry in evidence])
+        if set(entries) != {e['matrix_entry_id'] for e in evidence} or repair_kind is None:
             raise self._runtime_error()
         state_digest = canonical_digest(state)
         def apply(tx):
@@ -478,6 +487,14 @@ class ProductTestRepair:
                 'Do not modify product source, support files, build tooling, lockfiles or recipes. '
                 'Owner explanation (data, not additional scope): ' + request.reason + '\nVerified failures:\n'
                 + json.dumps([e['report'] for e in evidence], ensure_ascii=False))
+            if repair_kind == 'missing_required_cases':
+                reason = ('Repair missing required test case IDs only in ' + selected['path'] + '. '
+                    'Compare the frozen test plan with existing assertions. Add the exact missing IDs as real '
+                    'tests with substantive assertions; keep all existing IDs and assertions unchanged. '
+                    'Do not weaken the plan, skip tests, fabricate results, or change product source, support '
+                    'files, recipes or tooling. All frozen required IDs must execute. '
+                    'Owner explanation (data, not additional scope): ' + request.reason + '\nVerified reports:\n'
+                    + json.dumps([entry['report'] for entry in evidence], ensure_ascii=False))
             for work in selected['items']:
                 if work['id'] in removed:
                     tx.put('work_revision', str(uuid4()), {'work_item_id': work['id'], 'snapshot': work, 'reason': reason})
@@ -512,6 +529,10 @@ class ProductTestRepair:
                     'to the existing contract, including omitting unsampled metrics without inventing sample counts. '
                     'Use the controller-provided complete diff; '
                     'earlier implementation snapshots are not the baseline of this repair.'}})
+            if repair_kind == 'missing_required_cases':
+                review_work = tx.get('work_item', review_id)
+                tx.put('work_item', review_id, {**review_work, 'payload': {
+                    **review_work['payload'], 'change_expectation': MISSING_CASE_REPAIR_SCOPE}}, review_work['revision'])
             latest = tx.get('work_item', unit['id'])
             tx.put('work_item', unit['id'], {**latest, 'dependencies': [*dependencies, review_id]}, latest['revision'])
             updated_run = tx.put('run', run['id'], {**run, 'input_fingerprint': canonical_digest({
@@ -534,7 +555,8 @@ class ProductTestRepair:
                 'repair_work_item_id': identity, 'review_work_item_id': review_id, 'phase': selected['phase'],
                 'write_paths': [selected['path']], 'replaced_repair_id': request.replace_repair_id,
                 'evidence': evidence, 'affected_work_item_ids': sorted(affected), 'request_fingerprint': fingerprint,
-                'actor': 'system' if automatic else 'owner', 'request': payload, 'result': response, 'created_at': utc_now()})
+                'actor': 'system' if automatic else 'owner', 'repair_kind': repair_kind,
+                'request': payload, 'result': response, 'created_at': utc_now()})
             tx.event('product.test_runtime_repair_scheduled', {'repair_id': record['id'], 'candidate_id': candidate['id']},
                      run_id=run['id'])
             return response

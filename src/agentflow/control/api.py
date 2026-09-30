@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import ipaddress
 import json
 import logging
 from contextlib import asynccontextmanager
@@ -158,7 +159,14 @@ def create_app(settings: Settings | None = None, *, store=None, artifacts=None,
                     if len(content) > settings.max_body_bytes:
                         raise DomainError("body_too_large", "Request exceeds the configured limit", 413)
                 request._body = bytes(content)
-            if path == '/api/v1/session/resume' and request.method == 'POST':
+            if path == '/api/v1/session/local' and request.method == 'POST':
+                try:
+                    local_client = request.client is not None and ipaddress.ip_address(request.client.host).is_loopback
+                except ValueError:
+                    local_client = False
+                if not local_client or request.headers.get('sec-fetch-site') not in {None, 'same-origin', 'none'}:
+                    raise DomainError('local_session_forbidden', 'Local sessions require a same-origin loopback client', 403)
+            elif path == '/api/v1/session/resume' and request.method == 'POST':
                 tokens.require(bearer(request), 'agentflow_browser_session', 'session:renew')
             elif path.startswith("/api/") and not (path == "/api/v1/session" and request.method == "POST"):
                 tokens.require(bearer(request), "agentflow_owner", "owner:control")
@@ -194,6 +202,13 @@ def create_app(settings: Settings | None = None, *, store=None, artifacts=None,
             raise DomainError('invalid_request', 'Browser continuation accepts an empty object', 422)
         token = tokens.resume_browser_session(bearer(request))
         return {'owner_token': token, 'token_type': 'Bearer',
+                'expires_at': (datetime.now(UTC) + timedelta(seconds=settings.owner_token_seconds)).isoformat()}
+
+    @app.post('/api/v1/session/local', status_code=201)
+    async def local_browser(request: Request):
+        await body(request, 'SessionLocalRequest')
+        token = tokens.issue('agentflow_owner', {'owner:*'}, 'owner', settings.owner_token_seconds)
+        return {'owner_token': token, 'browser_session_token': tokens.browser_session(token), 'token_type': 'Bearer',
                 'expires_at': (datetime.now(UTC) + timedelta(seconds=settings.owner_token_seconds)).isoformat()}
 
     @app.get("/api/v1/session")

@@ -1,3 +1,4 @@
+import json
 import uuid
 
 import httpx
@@ -34,6 +35,68 @@ async def test_management_requires_explicit_owner_token_and_never_sets_cookies(a
     assert response.headers["cache-control"] == "no-store"
     for forged in [{}, {"Cookie": "owner_token=anything"}, {"Authorization": "Bearer invalid"}]:
         assert (await client.get("/api/v1/projects", headers=forged)).status_code == 401
+
+
+async def test_local_browser_session_needs_no_bootstrap_and_retains_bearer_security(api):
+    app, client, headers, _ = api
+    before = await app.state.store.list('run')
+    response = await client.post('/api/v1/session/local', json={}, headers={
+        'Origin': client.base_url.__str__().rstrip('/'), 'Idempotency-Key': 'local', 'Sec-Fetch-Site': 'same-origin'})
+    assert response.status_code == 201, response.text
+    assert response.headers['cache-control'] == 'no-store' and 'set-cookie' not in response.headers
+    value = response.json()
+    owner = {**headers, 'Authorization': 'Bearer ' + value['owner_token']}
+    assert (await client.get('/api/v1/projects', headers=owner)).status_code == 200
+    assert (await client.get('/api/v1/projects')).status_code == 401
+    assert (await client.get('/api/v1/projects', headers={**owner,
+        'Authorization': 'Bearer ' + value['browser_session_token']})).status_code == 403
+    assert await app.state.store.list('run') == before
+
+
+@pytest.mark.parametrize('changed', [{'Host': 'evil.example'}, {'Origin': 'http://evil.example'},
+    {'Origin': 'null'}, {'Sec-Fetch-Site': 'cross-site'}, {'Sec-Fetch-Site': 'same-site'},
+    {'Sec-Fetch-Site': 'unexpected'}, {'Origin': ''}, {'Idempotency-Key': ''}])
+async def test_local_session_rejects_invalid_boundary(api, changed):
+    app, client, _, _ = api
+    count = len(app.state.tokens._tokens)
+    response = await client.post('/api/v1/session/local', json={}, headers={
+        'Origin': app.state.settings.origin, 'Idempotency-Key': 'local-invalid', **changed})
+    assert response.status_code in {403, 422}
+    assert len(app.state.tokens._tokens) == count
+
+
+@pytest.mark.parametrize('address', ['192.168.1.5', '203.0.113.1', '::ffff:192.168.1.5', 'unknown'])
+async def test_local_session_rejects_non_loopback_peer_even_with_forged_forwarding(api, address):
+    app, _, _, _ = api
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app, client=(address, 1234)),
+                                 base_url=app.state.settings.origin) as remote:
+        response = await remote.post('/api/v1/session/local', json={}, headers={
+            'Origin': app.state.settings.origin, 'Idempotency-Key': 'remote', 'X-Forwarded-For': '127.0.0.1'})
+    assert response.status_code == 403
+
+
+@pytest.mark.parametrize('payload', [{'bootstrap_token': 'anything'}, {'reason': 'allow'}, [], None])
+async def test_local_session_requires_empty_object(api, payload):
+    app, client, _, _ = api
+    count = len(app.state.tokens._tokens)
+    response = await client.post('/api/v1/session/local', content=json.dumps(payload), headers={
+        'Origin': app.state.settings.origin, 'Idempotency-Key': 'invalid-body', 'Content-Type': 'application/json'})
+    assert response.status_code == 422
+    assert len(app.state.tokens._tokens) == count
+
+
+async def test_local_session_connects_to_new_controller_after_restart(api):
+    app, client, _, _ = api
+    headers = {'Origin': app.state.settings.origin, 'Idempotency-Key': 'local-restart'}
+    original = (await client.post('/api/v1/session/local', json={}, headers=headers)).json()
+    restarted = create_app(app.state.settings, store=app.state.store)
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=restarted), base_url=app.state.settings.origin) as fresh:
+        assert (await fresh.post('/api/v1/session/resume', json={}, headers={**headers,
+            'Authorization': 'Bearer ' + original['browser_session_token']})).status_code == 401
+        response = await fresh.post('/api/v1/session/local', json={}, headers=headers)
+        assert response.status_code == 201
+        assert (await fresh.get('/api/v1/projects', headers={
+            'Authorization': 'Bearer ' + response.json()['owner_token']})).status_code == 200
     attempt = app.state.tokens.issue("agentflow_attempt", {"llm:chat"}, "attempt", 60)
     assert (await client.get("/api/v1/projects", headers={"Authorization": "Bearer " + attempt})).status_code == 403
 

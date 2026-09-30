@@ -37,7 +37,7 @@ export class OwnerApi {
     const headers = new Headers({ Accept: 'application/json' });
     if (authenticate !== false) {
       const token = typeof authenticate === 'string' ? authenticate : this.#token;
-      if (!token) throw new ApiError('unauthorized', '请通过本机启动链接打开工作台', 401);
+      if (!token) throw new ApiError('unauthorized', '本机连接尚未建立，请重新连接', 401);
       headers.set('Authorization', `Bearer ${token}`);
     }
     if (method !== 'GET') headers.set('Idempotency-Key', key ?? crypto.randomUUID());
@@ -61,7 +61,7 @@ export class OwnerApi {
       let value: { error?: { code?: string; message?: string; details?: unknown } } = {};
       try { value = await response.json(); } catch { /* status remains authoritative */ }
       if (response.status === 401 && authenticate === true) {
-        if (allowRenew && this.#browserTicket && value.error?.code === 'unauthorized') {
+        if (allowRenew && value.error?.code === 'unauthorized') {
           try { await this.renew(); }
           catch (error) {
             if (error instanceof ApiError && [401, 403].includes(error.status)) { this.clear(); this.onExpired?.(); }
@@ -92,22 +92,37 @@ export class OwnerApi {
 
   private renew(): Promise<void> {
     if (this.#renewing) return this.#renewing;
-    if (!this.#browserTicket) return Promise.reject(new ApiError('unauthorized', '请通过 agentflow start 打开工作台', 401));
-    this.#renewing = this.fetch('/api/v1/session/resume', 'POST', {}, undefined, undefined, this.#browserTicket, false)
-      .then(response => response.json()).then((result: { owner_token?: unknown }) => {
-        if (typeof result.owner_token !== 'string' || !result.owner_token) throw new ApiError('invalid_response', '服务未返回有效连接');
-        this.#token = result.owner_token;
-      }).finally(() => { this.#renewing = undefined; });
+    this.#renewing = this.reconnect().finally(() => { this.#renewing = undefined; });
     return this.#renewing;
   }
 
-  async restore(): Promise<boolean> {
-    if (!this.#browserTicket) return false;
-    try { await this.renew(); return true; }
-    catch (error) {
-      if (error instanceof ApiError && [401, 403].includes(error.status)) { this.clear(); return false; }
-      throw error;
+  private async reconnect(): Promise<void> {
+    if (this.#browserTicket) {
+      try {
+        const response = await this.fetch('/api/v1/session/resume', 'POST', {}, undefined, undefined, this.#browserTicket, false);
+        const result = await response.json() as { owner_token?: unknown };
+        if (typeof result.owner_token !== 'string' || !result.owner_token) throw new ApiError('invalid_response', '服务未返回有效连接');
+        this.#token = result.owner_token;
+        return;
+      } catch (error) {
+        if (!(error instanceof ApiError) || error.status !== 401 || error.code !== 'unauthorized') throw error;
+        this.clear();
+      }
     }
+    const response = await this.fetch('/api/v1/session/local', 'POST', {}, undefined, undefined, false, false);
+    const result = await response.json() as { owner_token?: unknown; browser_session_token?: unknown };
+    if (typeof result.owner_token !== 'string' || !result.owner_token
+        || typeof result.browser_session_token !== 'string' || !result.browser_session_token) {
+      throw new ApiError('invalid_response', '服务未返回有效本机连接');
+    }
+    this.#token = result.owner_token;
+    this.#browserTicket = result.browser_session_token;
+    try { window.sessionStorage.setItem(this.sessionKey, this.#browserTicket); } catch { /* Current page still works. */ }
+  }
+
+  async restore(): Promise<boolean> {
+    await this.renew();
+    return true;
   }
 
   async get<T>(path: string, signal?: AbortSignal): Promise<T> {

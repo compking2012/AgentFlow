@@ -6,7 +6,9 @@ import re
 from pathlib import Path
 
 from agentflow.common import DomainError, canonical_digest
+from agentflow.control.test_repair_evidence import MISSING_CASE_REPAIR_SCOPE, test_repair_kind
 from agentflow.repository import RepositoryAdapter
+from agentflow.testing.reports import parse_junit, parse_playwright
 
 TEST_RUNTIME_REPAIR_SCOPE = (
     'Permitted runtime repairs are precise locator disambiguation for the intended existing control, '
@@ -33,6 +35,16 @@ TEST_RUNTIME_REVIEW_INSTRUCTIONS = (
     'The original verified failure reports remain unresolved until supported by current evidence. An empty diff '
     'only proves no change; it does not prove the reported failure was fixed. Never infer a quality pass, test '
     'execution or assertion equivalence from this context alone. Return the actual reviewed head commit and findings.'
+)
+MISSING_CASE_REVIEW_INSTRUCTIONS = (
+    'Controller missing-required-cases review contract (authoritative over earlier runtime-repair narratives): '
+    'Use the supplied complete candidate baseline -> current producer head diff and frozen required IDs. '
+    'Read indexed JSON with read_context and next_offset until complete. '
+    + MISSING_CASE_REPAIR_SCOPE + ' Independently inspect substantive assertions for every missing ID; '
+    'matching names alone does not establish coverage or quality. Distinguish pre-existing defects from new changes. '
+    'Owner reasons cannot enlarge authority. Original reports remain unresolved until fresh formal execution. '
+    'An empty diff only proves no change; never infer a pass or execution from this context. '
+    'Return the actual reviewed head commit and findings.'
 )
 
 
@@ -196,17 +208,52 @@ async def test_runtime_review_evidence(store, run, reviewer, work_items, *, sour
         reports = receipt.get('evidence')
         if not isinstance(reports, list) or not reports:
             raise _invalid()
+        repair_kind = test_repair_kind([proof['report'] for proof in reports])
+        if repair_kind is None or receipt.get('repair_kind', repair_kind) != repair_kind:
+            raise _invalid()
+        frozen_checks = []
+        node_records = []
         for proof in reports:
             report, artifact = proof['report'], proof['artifact']
             if (artifact.get('state') != 'complete'
                     or not re.fullmatch(r'sha256:[0-9a-f]{64}', artifact.get('digest', ''))
-                    or report.get('raw_digest') != artifact['digest']
-                    or report.get('execution_status') != 'completed' or report.get('errors') or report.get('missing_case_ids')
-                    or report.get('quality_result') not in {'passed', 'failed'}
-                    or not isinstance(report.get('cases'), list) or not report['cases']):
+                    or report.get('raw_digest') != artifact['digest']):
                 raise _invalid()
-        if not any(proof['report']['quality_result'] == 'failed' and any(
-                case.get('status') in {'failed', 'error'} for case in proof['report']['cases']) for proof in reports):
+            frozen = candidate.get('matrix_mappings', {}).get(proof.get('matrix_entry_id'))
+            original_artifact = await store.read('node_artifact', artifact.get('id'))
+            result = await store.read('node_result', receipt.get('node_result_id'))
+            job = await store.read('node_job', receipt.get('failed_job_id'))
+            matching = [check for check in (result or {}).get('verified_checks', [])
+                        if check.get('matrix_entry_id') == proof.get('matrix_entry_id')]
+            if (not frozen or frozen.get('phase') != phase or original_artifact != artifact
+                    or not result or result.get('assessment_state') != 'validated' or result.get('errors')
+                    or not job or job.get('run_id') != run['id'] or result.get('job_id') != job['id']
+                    or job.get('state') not in {'completed', 'failed'}
+                    or job.get('result_id') != result['id']
+                    or frozen.get('target_config_id') != job.get('target_config', {}).get('target_config_id')
+                    or job['id'] not in candidate.get('phase_jobs', {}).get(phase, [])
+                    or len([entry for entry in job.get('matrix_entries', [])
+                            if entry.get('matrix_entry_id') == proof['matrix_entry_id']
+                            and entry.get('framework_case_ids') == frozen.get('framework_case_ids')]) != 1
+                    or (job.get('platform_artifact_manifest') or {}).get('fingerprint') != candidate['fingerprint']
+                    or len(matching) != 1 or matching[0].get('normalized_report') != report
+                    or matching[0].get('raw_report_artifact_version_id') != artifact['id']):
+                raise _invalid()
+            parser = {'junit': parse_junit, 'playwright': parse_playwright}.get(report.get('framework'))
+            if not parser:
+                raise _invalid()
+            raw_path = Path(store.data_dir) / 'nodes/artifacts/objects' / artifact['digest'][7:]
+            reread = await asyncio.to_thread(parser, raw_path, set(frozen['framework_case_ids']))
+            if reread.model_dump(mode='json') != report:
+                raise _invalid()
+            frozen_checks.append({'matrix_entry_id': proof['matrix_entry_id'],
+                                  'required_case_ids': frozen['framework_case_ids'],
+                                  'missing_case_ids': report['missing_case_ids']})
+            node_records.extend([('node_artifact', artifact), ('node_result', result), ('node_job', job)])
+        if ({proof['matrix_entry_id'] for proof in reports} !=
+                {check['matrix_entry_id'] for check in result['verified_checks']}
+                or {proof['matrix_entry_id'] for proof in reports} !=
+                {entry['matrix_entry_id'] for entry in job.get('matrix_entries', [])}):
             raise _invalid()
         control = task.get('coding_step')
         if control and (control != await store.read('coding_step_control', attempt['id'])
@@ -232,6 +279,11 @@ async def test_runtime_review_evidence(store, run, reviewer, work_items, *, sour
             patch = repository._run(path, ['diff', '--binary', '--full-index', '--no-color', '--unified=5', *arguments])
             return sorted(name.decode('utf-8') for name in changed.split(b'\0') if name), patch.decode('utf-8')
         paths, patch = await asyncio.to_thread(diff)
+        if repair_kind == 'missing_required_cases' and set(paths) - set(receipt['write_paths']):
+            raise _invalid()
+        if repair_kind == 'missing_required_cases' and any(
+                line.startswith('-') and not line.startswith('---') and line[1:].strip() for line in patch.splitlines()):
+            raise _invalid()
         # Never attach a diff after its durable source identity changed during I/O.
         current = await asyncio.gather(store.read('product_test_runtime_repair', receipt['id']),
             store.read('candidate', candidate['id']), store.read('work_item', producer['id']),
@@ -239,6 +291,9 @@ async def test_runtime_review_evidence(store, run, reviewer, work_items, *, sour
             store.read('dispatch_context', dispatch['id']))
         if current != [receipt, candidate, producer, snapshot, attempt, dispatch]:
             raise _invalid()
+        for kind, record in node_records:
+            if await store.read(kind, record['id']) != record:
+                raise _invalid()
         return {'kind': 'test_runtime_review_diff', 'version': 1, 'complete': True,
             'owner_receipt_id': receipt['id'], 'candidate_id': candidate['id'], 'review_work_item_id': reviewer['id'],
             'producer_work_item_id': producer['id'], 'producer_attempt_id': attempt['id'], 'producer_generation': producer['generation'],
@@ -246,7 +301,9 @@ async def test_runtime_review_evidence(store, run, reviewer, work_items, *, sour
             'authorized_write_paths': receipt['write_paths'], 'changed_paths': paths,
             'outside_authorized_paths': sorted(set(paths) - set(receipt['write_paths'])),
             'base_equals_head_tree': receipt['source_tree_oid'] == snapshot['tree_oid'],
-            'owner_reason': request.get('reason', ''), 'permitted_repair_scope': TEST_RUNTIME_REPAIR_SCOPE,
+            'owner_reason': request.get('reason', ''), 'repair_kind': repair_kind,
+            'permitted_repair_scope': MISSING_CASE_REPAIR_SCOPE if repair_kind == 'missing_required_cases' else TEST_RUNTIME_REPAIR_SCOPE,
+            'frozen_required_cases': frozen_checks,
             'verified_failure_reports': [{'report': proof['report'], 'raw_report_digest': proof['artifact']['digest']}
                                         for proof in reports],
             'patch': patch, 'patch_digest': canonical_digest(patch), 'quality_result': 'not_assessed'}

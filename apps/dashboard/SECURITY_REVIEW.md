@@ -9,7 +9,8 @@
 | 边界 | 源码判断及验证 |
 | --- | --- |
 | 启动码 | `main.tsx` 在 render、交换请求之前调用 `takeBootstrap()`；浏览器确认 URL fragment 已移除且请求 URL 不包含启动码。 |
-| 会话保存 | `OwnerApi.#token` 为内存私有字段；源码无本地持久存储/Cookie 写入。浏览器确认 localStorage、sessionStorage、Cookie 均为空，刷新后锁定。 |
+| 会话保存 | `OwnerApi.#token` 为内存私有字段；Owner 凭据不写入持久存储或 Cookie，仅将受限续接票据按 origin+port 保存于标签页 sessionStorage。刷新优先续接，失效后重新建立本机会话。 |
+| 直接连接 | `POST /api/v1/session/local` 无需启动码，要求精确 Host、同源 Origin、回环客户端与幂等键，拒绝跨站 Fetch Metadata；无 Cookie，管理接口仍要求 Bearer。任一本机进程可按此边界建立 Owner 会话，这不是本机用户/进程间隔离；不对非回环主机开放。 |
 | 请求去向 | 唯一 fetch 出口固定到启动来源，仅接受 `/api/v1/`，拒绝路径穿越、反斜杠、外部来源及重定向；`credentials: omit`、`mode: same-origin`、`referrerPolicy: same-origin`。引用信息仅发送到同源；该策略避免 WebKit 将管理 POST 的 Origin 改写为 null，服务器仍严格核验 Origin。实际带认证请求均为控制来源。 |
 | 事件流 | 使用认证 fetch；token 不进入 EventSource URL。连接断开后重连并保留当前游标，运行切换时中止旧连接。 |
 | XSS/产物 | 页面无 `dangerouslySetInnerHTML`、`innerHTML`、eval 或动态 Function；报告经过 React 文本转义。含 script 标签的真实存储产物未执行。下载按 `.bin` 保存，不打开 iframe 或报告 URL。 |

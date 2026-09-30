@@ -13,7 +13,7 @@ npm ci
 npm run build
 ```
 
-Build output goes to `../../src/agentflow/web/` and is served by the local AgentFlow controller. Run `agentflow start` to start the background service and open the dashboard, or reopen it after refreshing. Building replaces that output directory; rebuild after source changes.
+Build output goes to `../../src/agentflow/web/` and is served by the local AgentFlow controller. Run `agentflow start` to start the background service. While it is running, open `http://127.0.0.1:8787` directly; no startup link is required, including in a new tab or after a controller restart. This does not install login autostart or expose the controller to the LAN. Building replaces that output directory; rebuild after source changes.
 
 `npm run dev` only serves the Vite development page. Verify management operations on the controller's same-origin page. No cross-origin management API, development proxy, or mock backend is configured.
 

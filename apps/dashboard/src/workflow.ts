@@ -54,7 +54,7 @@ export function isReadableArtifact(artifact: ReadableArtifact): boolean {
 export type WorkflowTone = 'active' | 'complete' | 'attention' | 'danger' | 'pending' | 'cancelled';
 type WorkflowState = Pick<WorkflowStage, 'status' | 'quality_result' | 'provenance' | 'repair_context'> & { step?: string; role?: string; tasks?: StageTask[] };
 function isReview(stage: WorkflowState): boolean {
-  return stage.step === 'code_review' || stage.role === 'review';
+  return stage.step !== undefined ? stage.step === 'code_review' : stage.role === 'review';
 }
 function currentTasks(stage: WorkflowState): StageTask[] {
   return [...(stage.tasks ?? []), ...(stage.repair_context?.tasks ?? [])].filter(task => !task.is_history);

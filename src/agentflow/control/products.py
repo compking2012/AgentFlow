@@ -24,7 +24,7 @@ from agentflow.control.product_models import (
 )
 from agentflow.control.product_repair import ProductTestRepair
 from agentflow.control.remediation import ReviewRemediation
-from agentflow.domain.planning import STEPS
+from agentflow.domain.planning import EXECUTION_STEPS, STEPS
 from agentflow.models.budget import account_id
 from agentflow.models.profiles import ModelProfile
 from agentflow.runtime.failures import (
@@ -328,7 +328,9 @@ class ProductService:
     def _failed_work(item):
         return (not item.get('archived') and item.get('required', True)
                 and (item.get('status') in {'failed', 'blocked', 'execution_unknown'}
-                     or item.get('quality_result') == 'failed'))
+                     or item.get('quality_result') == 'failed'
+                     or (item.get('status') == 'completed' and item.get('step') in EXECUTION_STEPS
+                         and item.get('quality_result') != 'passed')))
 
     async def _failure_reasons(self, items):
         messages = []

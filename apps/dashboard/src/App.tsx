@@ -1,6 +1,6 @@
 import { Component, useCallback, useEffect, useRef, useState } from 'react';
 import type { ErrorInfo, PropsWithChildren } from 'react';
-import { OwnerApi, segment } from './api';
+import { ApiError, OwnerApi, segment } from './api';
 import { ErrorBox, Status } from './components';
 import { useResource, useRunEvents } from './hooks';
 import { ProductsView } from './ProductsView';
@@ -110,8 +110,12 @@ function Workspace({ api }: { api: OwnerApi }) {
 export function App({ api, bootstrap }: { api: OwnerApi; bootstrap: string | null }) {
   const [authenticated, setAuthenticated] = useState(false); const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error>(); const used = useRef(false);
+  const reconnect = useCallback(() => {
+    setLoading(true); setError(undefined);
+    api.restore().then(setAuthenticated).catch(setError).finally(() => setLoading(false));
+  }, [api]);
   useEffect(() => {
-    api.onExpired = () => { setAuthenticated(false); setError(new Error('本机连接已结束，请运行 agentflow start 重新打开工作台。')); };
+    api.onExpired = () => { setAuthenticated(false); setError(new Error('本机连接已结束，请重新连接工作台。')); };
     if (used.current) return;
     used.current = true;
     (bootstrap ? api.exchange(bootstrap).then(() => true) : api.restore())
@@ -119,7 +123,9 @@ export function App({ api, bootstrap }: { api: OwnerApi; bootstrap: string | nul
   }, [api, bootstrap]);
   if (authenticated) return <Workspace api={api} />;
   return <main className="connection-page"><section className="connection-card"><span className="brand-symbol">A</span><div className="eyebrow">AGENTFLOW · LOCAL</div><h1>{loading ? '正在连接工作台' : '打开本机工作台'}</h1>
-    <p>运行 <code>agentflow start</code>，启动服务并打开工作台。</p><p className="muted">页面刷新会自动续接已有连接。服务重启或首次打开时，使用本机启动链接即可。</p>
+    <p>服务运行时，直接访问当前网址即可连接，无需启动链接。</p>
+    {error instanceof ApiError && error.code === 'connection_error' && <p className="muted">若本机服务尚未运行，请先运行 <code>agentflow start</code> 启动服务。</p>}
+    {!loading && <button className="button" onClick={reconnect}>重新连接</button>}
     <ErrorBox error={error} />{loading && <p role="status" className="loading">正在续接本机连接…</p>}
   </section></main>;
 }
@@ -128,5 +134,5 @@ export class ErrorBoundary extends Component<PropsWithChildren, { failed: boolea
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
   componentDidCatch(_error: Error, _info: ErrorInfo) { /* Do not log potentially sensitive server or artifact data. */ }
-  render() { return this.state.failed ? <main className="connection-page"><section className="connection-card"><h1>页面无法读取当前数据</h1><p>请运行 agentflow start 重新打开工作台。未确认的操作不会由页面自动重试。</p></section></main> : this.props.children; }
+  render() { return this.state.failed ? <main className="connection-page"><section className="connection-card"><h1>页面无法读取当前数据</h1><p>请刷新页面重新连接。未确认的操作不会由页面自动重试。</p><button className="button" onClick={() => window.location.reload()}>重新连接</button></section></main> : this.props.children; }
 }
