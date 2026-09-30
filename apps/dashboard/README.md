@@ -1,48 +1,50 @@
 # AgentFlow Dashboard
 
-本机单用户研发工作台，使用 React 19、TypeScript 和 Vite。默认入口“创建产品”统一提供新建与已有项目导入，可多选 Web、API、iOS、Android、Windows、macOS、Linux；当前只自动执行受支持的 Web/API 工程。原生或未识别工程可静态登记，但不会启动研发。生产代码没有演示数据分支。
+English | [简体中文](README.zh-CN.md)
 
-## 构建与运行
+A local, single-owner software delivery dashboard built with React 19, TypeScript, and Vite. The default Create product entry supports both new products and imports, with multiple target selections: Web, API, iOS, Android, Windows, macOS, and Linux. Only supported Web/API projects execute automatically. Native or unrecognized projects can be registered statically but do not start development. Production code has no demo-data branch.
 
-在本目录执行：
+## Build and Run
+
+Run from this directory:
 
 ```sh
 npm ci
 npm run build
 ```
 
-构建输出位于 `../../src/agentflow/web/`，由 AgentFlow 本机控制服务提供静态资源。运行 `agentflow start` 自动启动后台服务并打开工作台；刷新或锁定后也使用同一命令。构建会同步替换此目录；源码更改后必须重新构建。
+Build output goes to `../../src/agentflow/web/` and is served by the local AgentFlow controller. Run `agentflow start` to start the background service and open the dashboard, or reopen it after refreshing. Building replaces that output directory; rebuild after source changes.
 
-`npm run dev` 仅提供 Vite 开发页面。实际管理操作应在控制服务的同源页面验证；项目未配置跨源管理接口、开发代理或模拟后端。
+`npm run dev` only serves the Vite development page. Verify management operations on the controller's same-origin page. No cross-origin management API, development proxy, or mock backend is configured.
 
-## 页面
+## Views
 
-- 创建产品：输入名称、长期目标与多个产品平台；新建时检查真实模型和执行条件。导入时先静态识别本机目录与平台，填写名称目标后登记，不运行项目代码；未识别平台不会自动猜成 Web。跟踪 Product 与关联 Run，仅对尚未启动的准备失败提供相应重试。代码已交付 Git 但导出失败时，“重试导出”只重新导出原交付；恢复待核对的记录不提供重试。完成且交付字段齐备后才提供源码下载和受管本机启动/停止，未知启动状态禁止再次启动。
-- 新增需求：选择已有产品，填写小范围变更和可选验收标准，保留原产品目标。流程从 PRD 更新开始，再检查已有架构和接口影响，然后进入开发与质量门禁。页面服从服务端的提交资格；预览、活跃运行、未支持的平台或待核对恢复状态不会被跳过。未确认回执保留同一请求版本和幂等键；当前需求尚未启动运行的准备失败可重试同一需求。
-- 执行台：阶段节点横向排列并自动换行，依据真实依赖绘制带方向的连接线。点击节点才显示该阶段产物、并行任务和具名汇总；执行高亮独立于失败标记，同阶段有失败与活跃任务时同时呈现。当前任务等待本机节点时，显示本机执行器的实际准备进度、未启动状态或验证失败原因。失败后先处理具体原因，再点击“重新准备本机执行器”；此操作只准备执行器，不重试工作代次或跳过验证。准备中及所需目标已就绪时不提供重复准备按钮。支持键盘方向键、Home/End、Enter/空格、Escape 和移动端滚动定位；运行控制仍绑定当前版本。
-- 人工审核：决定绑定打开时的准确版本和指纹；驳回需要原因及修改要求。过期请求禁止提交。
-- 产物与质量：展示已核验的单测/集成通过率、分类审查问题、明确报告的性能测量及样本数；未测或未登记数据不补零。默认阅读和下载面向人的 Markdown 报告，代码/测试产物显示真实目录与说明；内部 JSON 不作默认产物。候选与 Git 交付记录使用具名字段展示。
-- 本地设置：查看实际模型接受状态、凭据状态和后端探针；提供创建产品环境设置入口，保留自有节点配对及设备资源详情。
+- **Create product:** Enter a name, long-term goal, and platforms. New products check actual models and execution prerequisites. Import statically inspects a local directory and registers its name and goal without running project code; unknown platforms are not guessed as Web. The view tracks the Product and associated Run. Preparation failures are retryable only before execution starts. Export retry re-exports the original Git delivery without rerunning development; records awaiting recovery reconciliation are not retryable. Downloads and managed local start/stop require completion and complete delivery fields. Unknown launch state blocks another launch.
+- **Requirement changes:** Select an existing product, describe a focused change, and optionally supply acceptance criteria while retaining the original goal. The workflow starts with PRD updates, checks architecture and API impacts, then proceeds through development and quality gates. Server-side eligibility is enforced, including preview, active-run, unsupported-platform, and unresolved-recovery restrictions. Unconfirmed requests retain their request version and idempotency key; preparation failure before the new run starts can retry the same requirement.
+- **Execution console:** Stage nodes wrap horizontally, with directed edges based on actual dependencies. Selecting a stage reveals its artifacts, parallel tasks, and named summaries. Execution highlighting and failure markers are independent. Local-node waits show actual preparation progress, not-started status, or validation errors. After addressing the cause, explicitly prepare the local executor again; this does not retry work generations or bypass validation. Duplicate preparation is unavailable while preparing or once required targets are ready. Keyboard navigation supports arrow keys, Home/End, Enter/Space, and Escape, with mobile scroll positioning. Run controls remain version-bound.
+- **Human review:** Decisions bind to the exact version and fingerprint displayed when opened. Rejection requires a reason and requested changes; stale requests cannot be submitted.
+- **Artifacts and quality:** Display verified unit/integration pass rates, categorized review findings, explicitly reported performance measurements, and sample counts. Missing or unmeasured data is not filled with zero. Human-readable Markdown is the default for viewing and downloads; code/test artifacts show actual directories and descriptions. Internal JSON is not the default artifact. Candidates and Git deliveries use named fields.
+- **Local settings:** Show actual model acceptance, credential status, and backend probes; expose product environment setup, self-managed node pairing, and device-resource details.
 
-模型设置仅在用户点击“保存并使用此模型”时提交。API Key 使用密码输入框，不写入浏览器持久存储；提交成功或失败后均清空，改变供应商/接口地址也会清空凭据输入。分析角色使用 Chat Completions，编码使用 Responses；选择同一模型时需要同时支持两种接口。默认不向普通用户索要价格证明配置；实际费用未知时不显示为零。
+Model settings are submitted only when the user chooses Save and use this model. API keys use password inputs and are not written to persistent browser storage. Inputs are cleared after success or failure and when the provider or endpoint changes. Analysis uses Chat Completions; coding uses Responses. A shared model must support both. Ordinary users are not asked for pricing-evidence configuration by default; unknown cost is not shown as zero.
 
-长期配置统一在 `~/.config/agentflow/config.toml`，页面模型设置写入同一文件。服务返回的 `product_defaults` 只初始化尚未编辑的字段；检测到需重启的文件修改时，页面保留模型编辑入口、阻止创建新产品，并提示依次使用 `agentflow stop`、`agentflow start`。清空模型配置不隐式沿用旧数据库默认模型。
+Persistent configuration lives in `~/.config/agentflow/config.toml`; dashboard model settings write to the same file. Server `product_defaults` initialize only untouched fields. If a file change requires restart, model editing remains available, new product creation is blocked, and the page instructs the user to run `agentflow stop` followed by `agentflow start`. Clearing model configuration does not silently reuse old database defaults.
 
-## 数据和证据约定
+## Data and Evidence Contracts
 
-平台展示关联 `/runs/{id}/target_matrix`、`/checks` 和 `/candidates`。`target_matrix.plan.entries` 为计划，`bound_to_platform_manifest` 为绑定状态，都不能单独代表测试通过。
+The dashboard associates `/runs/{id}/target_matrix`, `/checks`, and `/candidates`. Neither `target_matrix.plan.entries` (the plan) nor `bound_to_platform_manifest` (binding status) alone proves a test passed.
 
-“有效通过”要求当前运行输入只对应一个候选，矩阵指纹与候选一致，并且该目标全部必检项存在同一候选指纹的完成检查、通过结论、已校验原始报告以及大于零的用例数量。旧候选、错配指纹、缺失检查或尚未校验的证据保留为未执行或验证未完成。任何平台通过都不会替代其他平台的证据。
+An effective pass requires exactly one candidate for the current run inputs, a matching matrix fingerprint, and every required target check completed with the same candidate fingerprint, a passing conclusion, verified raw reports, and a positive case count. Old candidates, mismatched fingerprints, missing checks, or unverified evidence remain unexecuted or incomplete. Evidence for one platform never substitutes for another.
 
-交付列表读取服务保存的回执；`confirmed_at`、`commit_oid`、`delivery_ref` 齐备才显示已确认交付。测试通过、人工批准与交付分别显示。
+Delivery lists read saved server receipts. Confirmed delivery requires `confirmed_at`, `commit_oid`, and `delivery_ref`. Test success, human approval, and delivery are displayed separately.
 
-阶段与质量读模型使用 `/runs/{id}/workflow` 和 `/runs/{id}/quality_summary`，并绑定运行输入版本与当前候选。汇总阶段只提供一个外层交付；内部贡献在选择该阶段后显示。可读产物使用服务返回的专用预览/下载地址，不能把派生 ID 当作内部 JSON 产物 ID 使用。原始报告来源已核验不等于测试通过，失败、部分覆盖、未测分别显示。
+Stage and quality read models use `/runs/{id}/workflow` and `/runs/{id}/quality_summary`, bound to the run-input version and current candidate. Summary stages expose one outer deliverable; internal contributions appear after stage selection. Readable artifacts use dedicated preview/download URLs from the server; derived IDs must not be treated as internal JSON artifact IDs. Verified report provenance is not a passing test result: failure, partial coverage, and unmeasured states remain distinct.
 
-本机等待说明读取 `/product_setup` 与 `/executor_jobs`，只关联当前运行、等待执行的工作及其代次、排队作业和完整一致的本机目标配置。目标标识相同但配置版本、系统、资源或工具要求不同仍不视为本机任务；对象键顺序不影响匹配，数组顺序保留。远程目标、其他运行、旧代次及已经结束的作业不会展示本机故障；部分平台就绪时，按当前排队任务实际所需的平台判断。准备操作通过 `/product_setup/local_execution` 显式提交，忙时禁用，回执无法确认时重用同一幂等键。
+Local-wait explanations read `/product_setup` and `/executor_jobs`. They match only the current run, pending work and its generation, queued jobs, and a complete consistent local target configuration. Matching target IDs alone are insufficient if configuration versions, OS, resources, or tool requirements differ. Object-key order does not affect matching; array order is preserved. Remote targets, other runs, older generations, and finished jobs do not surface as local failures. With partial platform readiness, readiness is evaluated against platforms needed by current queued work. Preparation is explicitly submitted through `/product_setup/local_execution`, disabled while busy, and reuses the same idempotency key when the receipt cannot be confirmed.
 
-## 浏览器验收
+## Browser Verification
 
-仓库根目录需已安装 Python 项目及测试依赖到 `.venv`。在本目录执行：
+Install the Python project and test dependencies into the repository-root `.venv` first. From this directory, run:
 
 ```sh
 npm run build -- --outDir /tmp/agentflow-dashboard-test
@@ -51,12 +53,12 @@ PLAYWRIGHT_BROWSERS_PATH=.playwright-browsers npx playwright install chromium
 AGENTFLOW_BROWSER_DASHBOARD_DIR=/tmp/agentflow-dashboard-test npm run test:browser
 ```
 
-测试目录为 `../../tests/browser/`。隔离构建目录由测试专用 `AGENTFLOW_BROWSER_DASHBOARD_DIR` 指定，不覆盖在线平台静态资源。既有工作台测试使用生产 owner API、真实 SQLite 和临时 Git 项目；节点配对使用真实 NodeService 和临时 PKI。`product_entry_server.py` 使用真实 Application/ProductService、临时已提交仓库和静态诊断，关闭调度器，只验证登记与准备中的真实状态，不调用模型或制造测试通过。`product_server.py` 继续作为独立的产品 UI 传输契约夹具，模拟状态仅用于下载、重试与启动地址等显示边界。生产应用不加载测试路由。
+Tests live in `../../tests/browser/`. The isolated build directory is selected through the test-only `AGENTFLOW_BROWSER_DASHBOARD_DIR`, avoiding replacement of live platform assets. Workspace tests use the production owner API, real SQLite, and temporary Git projects; node pairing uses a real NodeService and temporary PKI. `product_entry_server.py` uses actual Application/ProductService components, temporarily committed repositories, and static diagnostics with scheduling disabled. It verifies real registration/preparation states without calling models or manufacturing passing checks. `product_server.py` remains a separate product-UI transport-contract fixture; simulated states exercise display boundaries such as downloads, retries, and launch URLs. Production does not load test routes.
 
-Chromium 测试覆盖鉴权、审核竞态、质量矩阵、确认回执、配对、运行控制、产物读取边界、运行切换和键盘交互。产品入口覆盖平台多选、原生执行禁用、真实仓库静态导入、未识别平台不猜测、PRD 增量需求与验收标准、原目标保持不变、同版本同幂等键恢复、密钥清除、认证下载和本机启动地址边界。截图与失败 trace 写入 `tests/browser/artifacts/`；HTML 报告写入 `tests/browser/report/`，均为忽略的本地产物。
+Chromium coverage includes authentication, review races, quality matrices, confirmation receipts, pairing, run controls, artifact boundaries, run switching, and keyboard interaction. Product-entry coverage includes multi-platform selection, disabled native execution, static repository import, unknown-platform handling, incremental PRD requirements and acceptance criteria, unchanged original goals, version/idempotency-preserving recovery, key clearing, authenticated downloads, and local-launch URL boundaries. Screenshots and failure traces go to `tests/browser/artifacts/`; HTML reports go to `tests/browser/report/`. Both are ignored local outputs.
 
-这些测试证明 Dashboard 与真实 API、存储和 Git 项目管理的交互。fixture 中的平台报告和交付记录用于验证 DTO 展示，不构成七个平台原生执行、模型能力、真实交付流水线或供应商计费的验证。
+These tests verify dashboard interactions with actual APIs, storage, and Git project management. Fixture platform reports and delivery records verify DTO presentation, not seven-platform native execution, model capabilities, real delivery pipelines, or provider billing.
 
-## 安全
+## Security
 
-启动码在交换前从 URL 移除；owner token 仅存在页面私有内存。请求固定到页面来源和 `/api/v1/`，拒绝重定向，不使用 Cookie、Local Storage、Session Storage 或 query token。文档以安全的 React Markdown 节点展示，不执行原始 HTML、脚本或不安全链接；文档内容上限 1 MiB，JSON 传输封装也有读取上限。下载通过认证响应生成临时 Blob。更多复核内容见 [SECURITY_REVIEW.md](SECURITY_REVIEW.md)。
+Bootstrap codes are removed from the URL before exchange; owner tokens remain in private page memory. Requests are restricted to the page origin and `/api/v1/`, reject redirects, and do not use cookies, Local Storage, Session Storage, or query tokens. Documents render through safe React Markdown nodes without executing raw HTML, scripts, or unsafe links. Document content is limited to 1 MiB, and JSON transport envelopes also have read limits. Downloads create temporary Blobs from authenticated responses. See [SECURITY_REVIEW.md](SECURITY_REVIEW.md) for further review details.

@@ -1,5 +1,7 @@
 # AgentFlow frozen reference applications
 
+English | [简体中文](README.zh-CN.md)
+
 These fixtures exercise real APIs and native controls. They are test applications,
 not production authentication examples. The two synthetic identities are
 `reference.manager` and `reference.member`. Business expectations are declared in

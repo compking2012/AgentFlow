@@ -1,3 +1,7 @@
+# Windows Reference Application
+
+English | [简体中文](README.zh-CN.md)
+
 Restore and commit `packages.lock.json` using the selected .NET SDK before freezing
 the first source candidate. Frozen builds use locked restore; the node does not
 silently accept a new dependency graph. Build `TicketTests/TicketTests.csproj`,

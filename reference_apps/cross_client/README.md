@@ -1,5 +1,7 @@
 # Ordered cross-client fixture (LWP-38)
 
+English | [简体中文](README.zh-CN.md)
+
 This scenario is implemented in real native controls but has **not** been run on
 Android and Linux environments. It is separate from the seven target smoke recipes.
 The controller still needs to bind and schedule these ordered jobs against the same
