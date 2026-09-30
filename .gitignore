@@ -26,6 +26,10 @@ tests/browser/report/
 .cache/
 .superpowers/
 /validation/
+/docs/*
+!/docs/.gitkeep
+/.python-version
+/uv.lock
 build/
 .gradle/
 .build/
